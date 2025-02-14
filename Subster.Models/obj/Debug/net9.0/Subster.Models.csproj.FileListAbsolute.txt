@@ -1,0 +1,12 @@
+/Users/kacper/Desktop/subster-api/Subster.Models/bin/Debug/net9.0/Subster.Models.deps.json
+/Users/kacper/Desktop/subster-api/Subster.Models/bin/Debug/net9.0/Subster.Models.dll
+/Users/kacper/Desktop/subster-api/Subster.Models/bin/Debug/net9.0/Subster.Models.pdb
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.GeneratedMSBuildEditorConfig.editorconfig
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.AssemblyInfoInputs.cache
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.AssemblyInfo.cs
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.csproj.CoreCompileInputs.cache
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.sourcelink.json
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.dll
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/refint/Subster.Models.dll
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/Subster.Models.pdb
+/Users/kacper/Desktop/subster-api/Subster.Models/obj/Debug/net9.0/ref/Subster.Models.dll

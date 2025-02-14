@@ -1,0 +1,6 @@
+@Subster.API_HostAddress = http://localhost:5207
+
+GET {{Subster.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
