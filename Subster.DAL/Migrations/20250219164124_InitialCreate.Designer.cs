@@ -12,7 +12,7 @@ using Subster.DAL;
 namespace Subster.DAL.Migrations
 {
     [DbContext(typeof(SubsterDbContext))]
-    [Migration("20250219143607_InitialCreate")]
+    [Migration("20250219164124_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
