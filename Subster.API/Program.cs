@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Bætir við 
 builder.Services.AddDbContext<SubsterDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("SubsterDb")
@@ -14,6 +15,13 @@ builder.Services.AddDbContext<SubsterDbContext>(options =>
 );
 
 var app = builder.Build();
+
+// Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
+using (var scoper = app.Services.CreateScope())
+{
+    var dbContext = scoper.ServiceProvider.GetRequiredService<SubsterDbContext>();
+    dbContext.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
