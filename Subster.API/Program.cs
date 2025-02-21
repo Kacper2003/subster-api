@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
 using Subster.DAL;
 using Subster.DAL.Implementations;
 using Subster.DAL.Interfaces;
@@ -7,8 +8,8 @@ using Subster.API.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Fyrir öll viðkvæm gögn
-builder.Configuration.AddJsonFile("../env.json", optional: true, reloadOnChange: true);
+Env.Load();
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers();
 
