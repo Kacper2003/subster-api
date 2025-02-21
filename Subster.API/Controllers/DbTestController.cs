@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL;
+using Subster.DAL.Entities;
 
 
 [Microsoft.AspNetCore.Mvc.Route("api/test-db")]
@@ -16,16 +17,9 @@ public class DbTestController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> TestDatabaseConnection()
+    public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
-        try
-        {
-            var canConnect = await _context.Database.CanConnectAsync();
-            return Ok(new { Success = canConnect });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { Error = ex.Message });
-        }
+        var users = await _context.Users.ToListAsync();
+        return Ok(users);
     }
 }
