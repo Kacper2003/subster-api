@@ -4,14 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using Subster.DAL;
 using Subster.DAL.Entities;
 
+using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
-[Microsoft.AspNetCore.Mvc.Route("api/test-db")]
+
+[Route("api/[controller]")]
 [ApiController]
-public class DbTestController : ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly SubsterDbContext _context;
 
-    public DbTestController(SubsterDbContext context)
+    public UsersController(SubsterDbContext context)
     {
         _context = context;
     }
