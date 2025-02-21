@@ -21,6 +21,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddHttpClient();
+
 // Bætir við 
 builder.Services.AddDbContext<SubsterDbContext>(options =>
     options.UseNpgsql(
