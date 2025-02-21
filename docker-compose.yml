@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: substerdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5444:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d substerdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  subster-api:
+    build:
+      context: .
+      dockerfile: Subster.API/Dockerfile
+    container_name: subster-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development" # Change to "Production" as needed
+      ConnectionStrings__SubsterDb: "Host=postgres-db;Port=5432;Database=substerdb;Username=admin;Password=admin"
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
