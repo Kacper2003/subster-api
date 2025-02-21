@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Subster.DAL.Interfaces;
+using Subster.Models.Dtos;
 
 namespace Subster.DAL.Implementations;
 
@@ -11,8 +13,16 @@ public class UserRepository : IUserRepository
         _dbContext = dbContext;
     }
 
-    public void GetAllUsers()
+    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
     {
-        return;
+        return await _dbContext.Users
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Ssn = u.Ssn,
+                PhoneNumber = u.PhoneNumber
+            })
+            .ToListAsync();
     }
 }

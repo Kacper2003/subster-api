@@ -1,9 +1,9 @@
 using Subster.Models.Dtos;
 
-namespace Subster.DAL.Interfaces;
+namespace Subster.API.Services.Interfaces;
 
-public interface IUserRepository
+public interface IUserService
 {
     Task<IEnumerable<UserDto>> GetAllUsersAsync();
-    
+
 }

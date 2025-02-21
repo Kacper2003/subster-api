@@ -1,13 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL;
+using Subster.DAL.Implementations;
+using Subster.DAL.Interfaces;
+using Subster.API.Services.Interfaces;
+using Subster.API.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Fyrir öll viðkvæm gögn
+builder.Configuration.AddJsonFile("../env.json", optional: true, reloadOnChange: true);
 
 builder.Services.AddControllers();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Dependency Injection
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Bætir við 
 builder.Services.AddDbContext<SubsterDbContext>(options =>
