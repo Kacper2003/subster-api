@@ -54,8 +54,8 @@ public class UserRepository : IUserRepository
             {
                 Name = inputModel.Name,
                 Ssn = inputModel.Ssn,
-                PhoneNumber = "123-4567"
-                // CreatedAt = DateTime.Now
+                PhoneNumber = "123-4567",
+                CreatedAt = DateTime.UtcNow
             };
 
             // Save new user to database
