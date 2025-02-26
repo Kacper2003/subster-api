@@ -3,14 +3,38 @@ using DotNetEnv;
 using Subster.DAL;
 using Subster.DAL.Implementations;
 using Subster.DAL.Interfaces;
+using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.API.Services.Implementations;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
 // Add services to the container.
@@ -20,6 +44,9 @@ builder.Services.AddOpenApi();
 // Dependency Injection
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
+builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddHttpClient();
 
@@ -46,6 +73,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 

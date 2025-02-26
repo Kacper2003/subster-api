@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
-using Subster.DAL;
 using Subster.DAL.Entities;
 
 using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 using Subster.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 
 [Route("api/[controller]")]
@@ -20,6 +18,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
