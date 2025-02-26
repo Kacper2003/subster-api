@@ -11,11 +11,13 @@ public class AuthController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
     private readonly JwtService _jwtService;
+    private readonly IUserService _userService;
 
-    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService)
+    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService, IUserService userService)
     {
         _taktikalAuthService = taktikalAuthService;
         _jwtService = jwtService;
+        _userService = userService;
     }
 
     [HttpPost]
@@ -26,6 +28,12 @@ public class AuthController : ControllerBase
         {
             return BadRequest(authResult);
         }
+
+        await _userService.CreateUserIfNotExistsAsync(new UserInputModel
+        {
+            Ssn = authResult.Customer.Ssn,
+            Name = authResult.Customer.Name
+        });
 
         var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name);
 
