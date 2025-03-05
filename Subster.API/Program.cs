@@ -1,12 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Add services to the container
+
+// OpenAPI with caching
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.Expire(TimeSpan.FromMinutes(10)));
+});
 builder.Services.AddOpenApi();
 
 // Bætir við 
@@ -20,6 +30,8 @@ var app = builder.Build();
 
 app.MapControllers();
 
+app.UseOutputCache();
+
 // Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
 using (var scoper = app.Services.CreateScope())
 {
@@ -30,7 +42,8 @@ using (var scoper = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi()
+        .CacheOutput();
 }
 
 app.UseHttpsRedirection();
