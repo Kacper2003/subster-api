@@ -25,9 +25,9 @@ public class JwtService
         // Set up the claims you want inside the token
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, ssn),
-            new Claim(JwtRegisteredClaimNames.UniqueName, name),
-            new Claim("role", role),
+            new Claim("Ssn", ssn),
+            new Claim("Name", name),
+            new Claim("Role", role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

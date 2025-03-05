@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
 namespace Subster.API.Controllers;
@@ -63,6 +65,12 @@ public class AuthController : ControllerBase
     public IActionResult GetUserClaims()
     {
         var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+
+        foreach (var claim in claims)
+        {
+            Console.WriteLine($"{claim.Key}: {claim.Value}");
+        }
+
         return Ok(claims);
     }
 }
