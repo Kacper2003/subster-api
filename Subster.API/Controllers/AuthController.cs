@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
@@ -20,8 +21,8 @@ public class AuthController : ControllerBase
         _userService = userService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AuthenticateUser([FromBody] AuthInputModel inputModel)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] AuthInputModel inputModel)
     {
         var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
         if (!authResult.Authenticated)
@@ -47,5 +48,21 @@ public class AuthController : ControllerBase
             Customer = authResult.Customer
         });
     }
-}
 
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("jwt");
+        return Ok(new {
+            Authenticated = false
+        });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetUserClaims()
+    {
+        var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+        return Ok(claims);
+    }
+}
