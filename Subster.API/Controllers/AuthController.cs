@@ -7,7 +7,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 
-namespace Subster.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase

@@ -6,8 +6,8 @@ using Subster.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -17,8 +17,8 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
     [Authorize]
+    [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
