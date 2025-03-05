@@ -1,51 +1,65 @@
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Add controllers
 builder.Services.AddControllers();
 
-// Add services to the container
+// Add API explorer
+builder.Services.AddEndpointsApiExplorer();
 
-// OpenAPI with caching
+// Register Swagger generator
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "My API", 
+        Version = "v1" 
+    });
+});
+
+// Register output cache services
 builder.Services.AddOutputCache(options =>
 {
     options.AddBasePolicy(policy => policy.Expire(TimeSpan.FromMinutes(10)));
 });
-builder.Services.AddOpenApi();
 
-// Bætir við 
+// Register DbContext
 builder.Services.AddDbContext<SubsterDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("SubsterDb")
-    )
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SubsterDb"))
 );
 
 var app = builder.Build();
 
-app.MapControllers();
-
+// Use output caching
 app.UseOutputCache();
 
-// Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
+// Run migrations at startup
 using (var scoper = app.Services.CreateScope())
 {
     var dbContext = scoper.ServiceProvider.GetRequiredService<SubsterDbContext>();
     dbContext.Database.Migrate();
 }
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi()
-        .CacheOutput();
+    // Middleware to serve generated Swagger as a JSON endpoint.
+    app.UseSwagger();
+    
+    // Middleware to serve swagger-ui
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+    });
 }
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 app.Run();
