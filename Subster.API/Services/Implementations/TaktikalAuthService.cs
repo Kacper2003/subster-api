@@ -1,13 +1,8 @@
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
 using Subster.Models.Dtos;
-using System;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace Subster.API.Services.Implementations;
 

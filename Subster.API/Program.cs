@@ -21,6 +21,18 @@ var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.ContainsKey("jwt"))
+                {
+                    context.Token = context.Request.Cookies["jwt"];
+                }
+                return Task.CompletedTask;
+            }
+        };
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,

@@ -37,9 +37,13 @@ public class AuthController : ControllerBase
 
         var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name);
 
+        Response.Cookies.Append("jwt", token, new CookieOptions
+        {
+            HttpOnly = true
+        });
+
         return Ok(new {
             Authenticated = true,
-            Token = token,
             Customer = authResult.Customer
         });
     }
