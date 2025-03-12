@@ -16,7 +16,8 @@ Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
+var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]) ?? throw new Exception("Secret key not found");
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -56,6 +57,9 @@ builder.Services.AddOpenApi();
 // Dependency Injection
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 builder.Services.AddScoped<JwtService>();

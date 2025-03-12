@@ -9,4 +9,5 @@ public class SubsterDbContext : DbContext
          : base(options) { }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<Subscription> Subscriptions { get; set; }
 }

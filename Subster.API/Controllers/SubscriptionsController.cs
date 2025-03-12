@@ -9,10 +9,12 @@ using Subster.Models.InputModels;
 public class SubscriptionsController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
+    private readonly ISubscriptionService _subscriptionService;
 
-    public SubscriptionsController(ITaktikalAuthService taktikalAuthService)
+    public SubscriptionsController(ITaktikalAuthService taktikalAuthService, ISubscriptionService subscriptionService)
     {
         _taktikalAuthService = taktikalAuthService;
+        _subscriptionService = subscriptionService;
     }
 
     [Authorize]
@@ -25,14 +27,35 @@ public class SubscriptionsController : ControllerBase
             return BadRequest(authResult);
         }
 
-        // Create subscription
-        return Ok(new
+        // Get the user's SSN from the token
+        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (ssn == null)
         {
-            Subscription = new
-            {
-                SubscriptionId = Guid.NewGuid(),
-                Customer = authResult.Customer
-            }
+            return BadRequest("SSN not found in token");
+        }
+
+        await _subscriptionService.CreateSubscriptionAsync(new SubscriptionInputModel
+        {
+            UserSsn = ssn,
+            ClientName = authResult.Customer.Name,
+            ClientSsn = authResult.Customer.Ssn
         });
+
+        return Created();
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetSubscriptions()
+    {
+        // Get the user's SSN from the token
+        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (ssn == null)
+        {
+            return BadRequest("SSN not found in token");
+        }
+
+        var subscriptions = await _subscriptionService.GetSubscriptionsAsync(ssn);
+        return Ok(subscriptions);
     }
 }
