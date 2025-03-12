@@ -71,7 +71,12 @@ builder.Services.AddDbContext<SubsterDbContext>(options =>
 
 var app = builder.Build();
 
-app.MapControllers();
+app.UseHttpsRedirection();
+app.UseCors(builder =>
+    builder.WithOrigins("http://localhost:3000")
+           .AllowAnyHeader()
+           .AllowAnyMethod()
+           .AllowCredentials());
 
 // Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
 using (var scoper = app.Services.CreateScope())
@@ -89,13 +94,6 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseHttpsRedirection();
-
-app.UseCors(builder =>
-    builder.WithOrigins("http://localhost:3000")
-           .AllowAnyHeader()
-           .AllowAnyMethod()
-           .AllowCredentials());
-
+app.MapControllers();
 
 app.Run();
