@@ -16,7 +16,7 @@ services:
       - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d substerdb"]
-      interval: 10s
+      interval: 2s
       timeout: 5s
       retries: 5
 

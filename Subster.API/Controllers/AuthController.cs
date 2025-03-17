@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
-namespace Subster.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -20,8 +22,8 @@ public class AuthController : ControllerBase
         _userService = userService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AuthenticateUser([FromBody] AuthInputModel inputModel)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] AuthInputModel inputModel)
     {
         var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
         if (!authResult.Authenticated)
@@ -37,11 +39,37 @@ public class AuthController : ControllerBase
 
         var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name);
 
+        Response.Cookies.Append("jwt", token, new CookieOptions
+        {
+            HttpOnly = true
+        });
+
         return Ok(new {
             Authenticated = true,
-            Token = token,
             Customer = authResult.Customer
         });
     }
-}
 
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("jwt");
+        return Ok(new {
+            Authenticated = false
+        });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetUserClaims()
+    {
+        var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+
+        foreach (var claim in claims)
+        {
+            Console.WriteLine($"{claim.Key}: {claim.Value}");
+        }
+
+        return Ok(claims);
+    }
+}

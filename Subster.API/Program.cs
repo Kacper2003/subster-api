@@ -24,6 +24,18 @@ var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.ContainsKey("jwt"))
+                {
+                    context.Token = context.Request.Cookies["jwt"];
+                }
+                return Task.CompletedTask;
+            }
+        };
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -76,8 +88,17 @@ builder.Services.AddDbContext<SubsterDbContext>(options =>
 
 var app = builder.Build();
 
+<<<<<<< HEAD
 // Use output caching
 app.UseOutputCache();
+=======
+app.UseHttpsRedirection();
+app.UseCors(builder =>
+    builder.WithOrigins("http://localhost:3000")
+           .AllowAnyHeader()
+           .AllowAnyMethod()
+           .AllowCredentials());
+>>>>>>> dev
 
 // Run migrations at startup
 using (var scoper = app.Services.CreateScope())
@@ -102,7 +123,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseHttpsRedirection();
+app.MapControllers();
 
 app.MapControllers();
 
