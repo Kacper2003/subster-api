@@ -42,6 +42,12 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync();
     }
 
+    public async Task<User?> GetUserEntityBySsnAsync(string ssn)
+    {
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Ssn == ssn);
+    }
+
     public async Task CreateUserAsync(UserInputModel inputModel)
     {
         // Check if user already exists
@@ -64,6 +70,19 @@ public class UserRepository : IUserRepository
         } else {
             // Update user name if it has changed
             existingUser.Name = inputModel.Name;
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+    
+    public async Task UpdatePaydayCredentialsAsync(int userId, string clientId, string clientSecret)
+    {
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user != null)
+        {
+            user.PaydayClientId = clientId;
+            user.PaydayClientSecret = clientSecret;
             await _dbContext.SaveChangesAsync();
         }
     }

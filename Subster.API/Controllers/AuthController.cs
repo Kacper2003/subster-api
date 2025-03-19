@@ -4,6 +4,8 @@ using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
 
+namespace Subster.API.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase

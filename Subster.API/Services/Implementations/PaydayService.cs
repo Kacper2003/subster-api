@@ -1,0 +1,94 @@
+using Microsoft.Extensions.Caching.Memory;
+using Subster.API.Services.Interfaces;
+using Subster.DAL.Interfaces;
+using Subster.Models.Dtos.Payday;
+
+namespace Subster.API.Services.Implementations;
+
+public class PaydayService : IPaydayService
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IUserRepository _userRepository;
+    private readonly IMemoryCache _cache;
+    private const string CacheKeyPrefix = "payday_token_";
+
+    public PaydayService(IHttpClientFactory httpClientFactory, IUserRepository userRepository, IMemoryCache cache)
+    {
+        _httpClientFactory = httpClientFactory;
+        _userRepository = userRepository;
+        _cache = cache;
+    }
+
+    public async Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret)
+    {
+        var user = await _userRepository.GetUserBySsnAsync(ssn);
+        if (user == null)
+        {
+            return false;
+        }
+
+        // check if the client ID and client secret are valid
+
+        await _userRepository.UpdatePaydayCredentialsAsync(user.Id, clientId, clientSecret);
+
+        return true;
+    }
+
+    public async Task<string?> GetAccessToken(string ssn, string? newClientId = null, string? newClientSecret = null)
+    {
+        var user = await _userRepository.GetUserEntityBySsnAsync(ssn);
+        if (user == null)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrEmpty(newClientId) && !string.IsNullOrEmpty(newClientSecret))
+        {
+            var tokenResponse = await RequestPaydayTokenAsync(newClientId, newClientSecret);
+            if (tokenResponse == null)
+            {
+                return null;
+            }
+
+            _cache.Set(CacheKeyPrefix + user.Id, tokenResponse.AccessToken, TimeSpan.FromSeconds(tokenResponse.ExpiresIn)); // Síðasti parameter er tími sem token er gildur í cache
+
+            return tokenResponse.AccessToken;
+        }
+
+        if (_cache.TryGetValue(CacheKeyPrefix + user.Id, out string? cachedToken) && cachedToken != null)
+        {
+            return cachedToken;
+        }
+
+        if (!string.IsNullOrEmpty(user.PaydayClientId) && !string.IsNullOrEmpty(user.PaydayClientSecret))
+        {
+            var tokenResponse = await RequestPaydayTokenAsync(user.PaydayClientId, user.PaydayClientSecret);
+            if (tokenResponse == null)
+            {
+                return null;
+            }
+
+            _cache.Set(CacheKeyPrefix + user.Id, tokenResponse.AccessToken, TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
+
+            return tokenResponse.AccessToken;
+        }
+
+        return null;
+    }
+
+    private async Task<PaydayTokenResponse?> RequestPaydayTokenAsync(string clientId, string clientSecret)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+        var response = await httpClient.PostAsJsonAsync("https://api.test.payday.is/auth/token", new
+        {
+            clientId,
+            clientSecret
+        });
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+        var tokenResponse = await response.Content.ReadFromJsonAsync<PaydayTokenResponse>();
+        return tokenResponse;
+    }
+}
