@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-
 
 [ApiController]
 [Route("api/[controller]")]
