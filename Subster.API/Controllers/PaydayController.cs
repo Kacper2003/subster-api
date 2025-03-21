@@ -36,6 +36,24 @@ public class PaydayController : ControllerBase
     }
 
     [Authorize]
+    [HttpDelete("credentials")]
+    public async Task<IActionResult> DeleteCredentials()
+    {
+        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(ssn))
+        {
+            return Unauthorized("SSN not found in token");
+        }
+
+        bool deleted = await _paydayService.DeleteCredentials(ssn);
+        if (!deleted)
+        {
+            return BadRequest(new { Error = "Could not delete credentials" });
+        }
+        return Ok();
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetPaydayInfo()
     {
