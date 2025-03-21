@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Subster.API.Services.Interfaces;
 using Subster.DAL.Interfaces;
+using Subster.DAL.Utilities;
 using Subster.Models.Dtos.Payday;
 
 namespace Subster.API.Services.Implementations;
@@ -10,13 +11,15 @@ public class PaydayService : IPaydayService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IUserRepository _userRepository;
     private readonly IMemoryCache _cache;
+    private readonly EncryptionHelper _encryptionHelper;
     private const string CacheKeyPrefix = "payday_token_";
 
-    public PaydayService(IHttpClientFactory httpClientFactory, IUserRepository userRepository, IMemoryCache cache)
+    public PaydayService(IHttpClientFactory httpClientFactory, IUserRepository userRepository, IMemoryCache cache, EncryptionHelper encryptionHelper)
     {
         _httpClientFactory = httpClientFactory;
         _userRepository = userRepository;
         _cache = cache;
+        _encryptionHelper = encryptionHelper;
     }
 
     public async Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret)
@@ -28,6 +31,11 @@ public class PaydayService : IPaydayService
         }
 
         // check if the client ID and client secret are valid
+        var tokenResponse = await RequestPaydayTokenAsync(clientId, clientSecret);
+        if (tokenResponse == null)
+        {
+            return false;
+        }
 
         await _userRepository.UpdatePaydayCredentialsAsync(user.Id, clientId, clientSecret);
 
@@ -44,10 +52,12 @@ public class PaydayService : IPaydayService
 
         await _userRepository.UpdatePaydayCredentialsAsync(user.Id, null, null);
 
+        _cache.Remove(CacheKeyPrefix + user.Id);
+
         return true;
     }
 
-    public async Task<string?> GetAccessToken(string ssn, string? newClientId = null, string? newClientSecret = null)
+    public async Task<string?> GetAccessToken(string ssn)
     {
         var user = await _userRepository.GetUserEntityBySsnAsync(ssn);
         if (user == null)
@@ -55,22 +65,9 @@ public class PaydayService : IPaydayService
             return null;
         }
 
-        if (!string.IsNullOrEmpty(newClientId) && !string.IsNullOrEmpty(newClientSecret))
-        {
-            var tokenResponse = await RequestPaydayTokenAsync(newClientId, newClientSecret);
-            if (tokenResponse == null)
-            {
-                return null;
-            }
-
-            _cache.Set(CacheKeyPrefix + user.Id, tokenResponse.AccessToken, TimeSpan.FromSeconds(tokenResponse.ExpiresIn)); // Síðasti parameter er tími sem token er gildur í cache
-
-            return tokenResponse.AccessToken;
-        }
-
         if (_cache.TryGetValue(CacheKeyPrefix + user.Id, out string? cachedToken) && cachedToken != null)
         {
-            return cachedToken;
+            return _encryptionHelper.Unprotect(cachedToken);
         }
 
         if (!string.IsNullOrEmpty(user.PaydayClientId) && !string.IsNullOrEmpty(user.PaydayClientSecret))
@@ -81,7 +78,7 @@ public class PaydayService : IPaydayService
                 return null;
             }
 
-            _cache.Set(CacheKeyPrefix + user.Id, tokenResponse.AccessToken, TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
+            _cache.Set(CacheKeyPrefix + user.Id, _encryptionHelper.Protect(tokenResponse.AccessToken), TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
 
             return tokenResponse.AccessToken;
         }
