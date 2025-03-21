@@ -1,18 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL.Interfaces;
 using Subster.DAL.Entities;
+using Subster.DAL.Utilities;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
+
 
 namespace Subster.DAL.Implementations;
 
 public class UserRepository : IUserRepository
 {
     private readonly SubsterDbContext _dbContext;
+    private readonly EncryptionHelper _encryptionHelper;
 
-    public UserRepository(SubsterDbContext dbContext)
+    public UserRepository(SubsterDbContext dbContext, EncryptionHelper encryptionHelper)
     {
         _dbContext = dbContext;
+        _encryptionHelper = encryptionHelper;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
@@ -44,8 +48,17 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetUserEntityBySsnAsync(string ssn)
     {
-        return await _dbContext.Users
+        var user = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Ssn == ssn);
+
+        if (user != null)
+        {
+            // Decrypt if not null
+            user.PaydayClientId = (user.PaydayClientId == null) ? null : _encryptionHelper.Unprotect(user.PaydayClientId);
+            user.PaydayClientSecret = (user.PaydayClientSecret == null) ? null : _encryptionHelper.Unprotect(user.PaydayClientSecret);
+        }
+
+        return user;
     }
 
     public async Task CreateUserAsync(UserInputModel inputModel)
@@ -81,8 +94,9 @@ public class UserRepository : IUserRepository
 
         if (user != null)
         {
-            user.PaydayClientId = clientId;
-            user.PaydayClientSecret = clientSecret;
+            // Encrypt if updating and not deleting
+            user.PaydayClientId = (clientId == null) ? null : _encryptionHelper.Protect(clientId);
+            user.PaydayClientSecret = (clientSecret == null) ? null : _encryptionHelper.Protect(clientSecret);
             await _dbContext.SaveChangesAsync();
         }
     }

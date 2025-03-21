@@ -3,6 +3,7 @@ using DotNetEnv;
 using Subster.DAL;
 using Subster.DAL.Implementations;
 using Subster.DAL.Interfaces;
+using Subster.DAL.Utilities;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
 using Subster.API.Services.Implementations;
@@ -58,13 +59,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
-builder.Services.AddMemoryCache();
-
 builder.Services.AddScoped<IPaydayService, PaydayService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
+
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddTransient<EncryptionHelper>();
+
+builder.Services.AddMemoryCache();
+builder.Services.AddDataProtection();
 
 builder.Services.AddHttpClient();
 
