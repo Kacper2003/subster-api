@@ -56,11 +56,13 @@ builder.Services.AddOpenApi();
 
 // Dependency Injection
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
-
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
+builder.Services.AddMemoryCache();
+
+builder.Services.AddScoped<IPaydayService, PaydayService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 builder.Services.AddScoped<JwtService>();
 

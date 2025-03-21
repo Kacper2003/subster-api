@@ -10,5 +10,5 @@ public interface IUserRepository
     Task<UserDto?> GetUserBySsnAsync(string ssn);
     Task<User?> GetUserEntityBySsnAsync(string ssn);
     Task CreateUserAsync(UserInputModel inputModel);
-    Task UpdatePaydayCredentialsAsync(int userId, string clientId, string clientSecret);
+    Task UpdatePaydayCredentialsAsync(int userId, string? clientId, string? clientSecret);
 }

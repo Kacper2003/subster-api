@@ -34,6 +34,19 @@ public class PaydayService : IPaydayService
         return true;
     }
 
+    public async Task<bool> DeleteCredentials(string ssn)
+    {
+        var user = await _userRepository.GetUserBySsnAsync(ssn);
+        if (user == null)
+        {
+            return false;
+        }
+
+        await _userRepository.UpdatePaydayCredentialsAsync(user.Id, null, null);
+
+        return true;
+    }
+
     public async Task<string?> GetAccessToken(string ssn, string? newClientId = null, string? newClientSecret = null)
     {
         var user = await _userRepository.GetUserEntityBySsnAsync(ssn);

@@ -74,7 +74,7 @@ public class UserRepository : IUserRepository
         }
     }
     
-    public async Task UpdatePaydayCredentialsAsync(int userId, string clientId, string clientSecret)
+    public async Task UpdatePaydayCredentialsAsync(int userId, string? clientId, string? clientSecret)
     {
         var user = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Id == userId);
