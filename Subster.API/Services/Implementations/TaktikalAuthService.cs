@@ -55,7 +55,7 @@ public class TaktikalAuthService : ITaktikalAuthService
         {
             authRequestId = authStart.AuthRequestId,
             FlowKey = flowKey,
-            LookupType = "Name"
+            LookupType = "Name" // IMPORTANT
         };
 
         var timeout = TimeSpan.FromSeconds(180);
