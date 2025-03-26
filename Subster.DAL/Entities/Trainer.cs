@@ -1,6 +1,6 @@
 namespace Subster.DAL.Entities;
-// Base user í bili, líklegast splittað í einkaþjálfara og notanda
-public class User
+
+public class Trainer
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;

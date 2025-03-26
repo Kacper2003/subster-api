@@ -37,7 +37,7 @@ public class SubscriptionsController : ControllerBase
 
         await _subscriptionService.CreateSubscriptionAsync(new SubscriptionInputModel
         {
-            UserSsn = ssn,
+            TrainerSsn = ssn,
             ClientName = authResult.Customer.Name,
             ClientSsn = authResult.Customer.Ssn
         });

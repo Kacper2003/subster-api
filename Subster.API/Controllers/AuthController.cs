@@ -12,13 +12,13 @@ public class AuthController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
     private readonly JwtService _jwtService;
-    private readonly IUserService _userService;
+    private readonly ITrainerService _trainerService;
 
-    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService, IUserService userService)
+    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService, ITrainerService trainerService)
     {
         _taktikalAuthService = taktikalAuthService;
         _jwtService = jwtService;
-        _userService = userService;
+        _trainerService = trainerService;
     }
 
     [HttpPost("login")]
@@ -30,13 +30,13 @@ public class AuthController : ControllerBase
             return BadRequest(authResult);
         }
 
-        await _userService.CreateUserIfNotExistsAsync(new UserInputModel
+        await _trainerService.CreateTrainerIfNotExistsAsync(new TrainerInputModel
         {
             Ssn = authResult.Customer.Ssn,
             Name = authResult.Customer.Name
         });
 
-        var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name);
+        var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name, "Trainer");
 
         Response.Cookies.Append("jwt", token, new CookieOptions
         {
@@ -60,7 +60,7 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public IActionResult GetUserClaims()
+    public IActionResult GetTrainerClaims()
     {
         var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
 
