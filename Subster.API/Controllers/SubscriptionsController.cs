@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
 
+namespace Subster.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

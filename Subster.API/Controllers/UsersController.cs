@@ -5,6 +5,7 @@ using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 using Subster.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
+namespace Subster.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
