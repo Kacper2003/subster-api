@@ -56,11 +56,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Dependency Injection
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
 builder.Services.AddScoped<IPaydayService, PaydayService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 

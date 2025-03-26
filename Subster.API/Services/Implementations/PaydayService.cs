@@ -9,23 +9,23 @@ namespace Subster.API.Services.Implementations;
 public class PaydayService : IPaydayService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IUserRepository _userRepository;
+    private readonly ITrainerRepository _trainerRepository;
     private readonly IMemoryCache _cache;
     private readonly EncryptionHelper _encryptionHelper;
     private const string CacheKeyPrefix = "payday_token_";
 
-    public PaydayService(IHttpClientFactory httpClientFactory, IUserRepository userRepository, IMemoryCache cache, EncryptionHelper encryptionHelper)
+    public PaydayService(IHttpClientFactory httpClientFactory, ITrainerRepository trainerRepository, IMemoryCache cache, EncryptionHelper encryptionHelper)
     {
         _httpClientFactory = httpClientFactory;
-        _userRepository = userRepository;
+        _trainerRepository = trainerRepository;
         _cache = cache;
         _encryptionHelper = encryptionHelper;
     }
 
     public async Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret)
     {
-        var user = await _userRepository.GetUserBySsnAsync(ssn);
-        if (user == null)
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+        if (trainer == null)
         {
             return false;
         }
@@ -37,48 +37,48 @@ public class PaydayService : IPaydayService
             return false;
         }
 
-        await _userRepository.UpdatePaydayCredentialsAsync(user.Id, clientId, clientSecret);
+        await _trainerRepository.UpdatePaydayCredentialsAsync(trainer.Id, clientId, clientSecret);
 
         return true;
     }
 
     public async Task<bool> DeleteCredentials(string ssn)
     {
-        var user = await _userRepository.GetUserBySsnAsync(ssn);
-        if (user == null)
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+        if (trainer == null)
         {
             return false;
         }
 
-        await _userRepository.UpdatePaydayCredentialsAsync(user.Id, null, null);
+        await _trainerRepository.UpdatePaydayCredentialsAsync(trainer.Id, null, null);
 
-        _cache.Remove(CacheKeyPrefix + user.Id);
+        _cache.Remove(CacheKeyPrefix + trainer.Id);
 
         return true;
     }
 
     public async Task<string?> GetAccessToken(string ssn)
     {
-        var user = await _userRepository.GetUserEntityBySsnAsync(ssn);
-        if (user == null)
+        var trainer = await _trainerRepository.GetTrainerEntityBySsnAsync(ssn);
+        if (trainer == null)
         {
             return null;
         }
 
-        if (_cache.TryGetValue(CacheKeyPrefix + user.Id, out string? cachedToken) && cachedToken != null)
+        if (_cache.TryGetValue(CacheKeyPrefix + trainer.Id, out string? cachedToken) && cachedToken != null)
         {
             return _encryptionHelper.Unprotect(cachedToken);
         }
 
-        if (!string.IsNullOrEmpty(user.PaydayClientId) && !string.IsNullOrEmpty(user.PaydayClientSecret))
+        if (!string.IsNullOrEmpty(trainer.PaydayClientId) && !string.IsNullOrEmpty(trainer.PaydayClientSecret))
         {
-            var tokenResponse = await RequestPaydayTokenAsync(user.PaydayClientId, user.PaydayClientSecret);
+            var tokenResponse = await RequestPaydayTokenAsync(trainer.PaydayClientId, trainer.PaydayClientSecret);
             if (tokenResponse == null)
             {
                 return null;
             }
 
-            _cache.Set(CacheKeyPrefix + user.Id, _encryptionHelper.Protect(tokenResponse.AccessToken), TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
+            _cache.Set(CacheKeyPrefix + trainer.Id, _encryptionHelper.Protect(tokenResponse.AccessToken), TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
 
             return tokenResponse.AccessToken;
         }

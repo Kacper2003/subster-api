@@ -8,6 +8,6 @@ public class Subscription
     public DateTime CreatedAt { get; set; }
 
     // Foreign keys
-    public int UserId { get; set; }
-    public User User { get; set; } = null!;
+    public int TrainerId { get; set; }
+    public Trainer Trainer { get; set; } = null!;
 }
