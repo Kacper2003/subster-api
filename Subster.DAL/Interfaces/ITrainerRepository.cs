@@ -9,6 +9,6 @@ public interface ITrainerRepository
     Task<IEnumerable<TrainerDto>> GetAllTrainersAsync();
     Task<TrainerDto?> GetTrainerBySsnAsync(string ssn);
     Task<Trainer?> GetTrainerEntityBySsnAsync(string ssn);
-    Task CreateTrainerAsync(TrainerInputModel inputModel);
+    Task CreateTrainerAsync(UserInputModel inputModel);
     Task UpdatePaydayCredentialsAsync(int trainerId, string? clientId, string? clientSecret);
 }

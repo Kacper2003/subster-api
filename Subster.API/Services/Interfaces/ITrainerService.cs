@@ -6,5 +6,5 @@ namespace Subster.API.Services.Interfaces;
 public interface ITrainerService
 {
     Task<IEnumerable<TrainerDto>> GetAllTrainersAsync();
-    Task CreateTrainerIfNotExistsAsync(TrainerInputModel inputModel);
+    Task<bool> CreateTrainerIfNotExistsAsync(UserInputModel inputModel);
 }
