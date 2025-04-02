@@ -19,12 +19,14 @@ public class TrainerService : ITrainerService
         return await _trainerRepository.GetAllTrainersAsync();
     }
 
-    public async Task CreateTrainerIfNotExistsAsync(TrainerInputModel inputModel)
+    public async Task<bool> CreateTrainerIfNotExistsAsync(UserInputModel inputModel)
     {
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(inputModel.Ssn);
         if (trainer == null)
         {
             await _trainerRepository.CreateTrainerAsync(inputModel);
+            return true;
         }
+        return false;
     }
 }

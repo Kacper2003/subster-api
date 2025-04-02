@@ -17,7 +17,7 @@ public class PaydayController : ControllerBase
         _paydayService = paydayService;
     }
 
-    [Authorize]
+    [Authorize(Roles = "Trainer")]
     [HttpPost("credentials")]
     public async Task<IActionResult> UpdateCredentials([FromBody] PaydayCredentialInputModel inputModel)
     {
@@ -35,7 +35,7 @@ public class PaydayController : ControllerBase
         return Ok();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Trainer")]
     [HttpDelete("credentials")]
     public async Task<IActionResult> DeleteCredentials()
     {
@@ -53,7 +53,7 @@ public class PaydayController : ControllerBase
         return Ok();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Trainer")]
     [HttpGet("me")]
     public async Task<IActionResult> GetPaydayInfo()
     {

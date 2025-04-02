@@ -61,7 +61,7 @@ public class TrainerRepository : ITrainerRepository
         return trainer;
     }
 
-    public async Task CreateTrainerAsync(TrainerInputModel inputModel)
+    public async Task CreateTrainerAsync(UserInputModel inputModel)
     {
         // Check if trainer already exists
         var existingTrainer = _dbContext.Trainers
