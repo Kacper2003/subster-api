@@ -19,7 +19,7 @@ public class SubscriptionRepository : ISubscriptionRepository
     {
         var subscription = new Subscription
         {
-            ClientName = clientName,
+            // ClientName = clientName,
             ClientSsn = clientSsn,
             CreatedAt = DateTime.UtcNow,
             TrainerId = trainerId
@@ -36,7 +36,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             .Select(s => new SubscriptionDto
             {
                 Id = s.Id,
-                ClientName = s.ClientName,
+                // ClientName = s.ClientName,
                 ClientSsn = s.ClientSsn,
                 CreatedAt = s.CreatedAt
             })

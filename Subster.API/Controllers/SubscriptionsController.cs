@@ -22,10 +22,10 @@ public class SubscriptionsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateSubscription([FromBody] AuthInputModel inputModel)
     {
-        var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
-        if (!authResult.Authenticated)
+        var clientAuthResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
+        if (!clientAuthResult.Authenticated)
         {
-            return BadRequest(authResult);
+            return BadRequest(clientAuthResult);
         }
 
         // Get the user's SSN from the token
@@ -38,8 +38,8 @@ public class SubscriptionsController : ControllerBase
         await _subscriptionService.CreateSubscriptionAsync(new SubscriptionInputModel
         {
             TrainerSsn = ssn,
-            ClientName = authResult.Customer.Name,
-            ClientSsn = authResult.Customer.Ssn
+            ClientName = clientAuthResult.Customer.Name,
+            ClientSsn = clientAuthResult.Customer.Ssn
         });
 
         return Created();
