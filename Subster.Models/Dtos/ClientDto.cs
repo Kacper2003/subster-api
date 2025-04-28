@@ -1,7 +1,8 @@
 namespace Subster.Models.Dtos;
 
-public class CustomerDto
+public class ClientDto
 {
+    public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Ssn { get; set; } = "";
 }

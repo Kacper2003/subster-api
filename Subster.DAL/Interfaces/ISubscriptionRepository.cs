@@ -5,6 +5,6 @@ namespace Subster.DAL.Interfaces;
 
 public interface ISubscriptionRepository
 {
-    Task CreateSubscriptionAsync(string clientSsn, string clientName, int userId);
-    Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int userId);
+    Task CreateSubscriptionAsync(string clientSsn, string clientName, int trainerId);
+    Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId);
 }

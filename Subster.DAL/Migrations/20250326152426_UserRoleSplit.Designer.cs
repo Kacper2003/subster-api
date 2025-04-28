@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Subster.DAL;
@@ -11,9 +12,11 @@ using Subster.DAL;
 namespace Subster.DAL.Migrations
 {
     [DbContext(typeof(SubsterDbContext))]
-    partial class SubsterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250326152426_UserRoleSplit")]
+    partial class UserRoleSplit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,33 +46,6 @@ namespace Subster.DAL.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("Subster.DAL.Entities.Program", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("DurationInMonths")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Price")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Program");
-                });
-
             modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
                 {
                     b.Property<int>("Id")
@@ -78,8 +54,9 @@ namespace Subster.DAL.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClientId")
-                        .HasColumnType("integer");
+                    b.Property<string>("ClientName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("ClientSsn")
                         .IsRequired()
@@ -88,17 +65,10 @@ namespace Subster.DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("TrainerId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("ProgramId");
 
                     b.HasIndex("TrainerId");
 
@@ -141,27 +111,11 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
                 {
-                    b.HasOne("Subster.DAL.Entities.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Subster.DAL.Entities.Program", "Program")
-                        .WithMany()
-                        .HasForeignKey("ProgramId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Subster.DAL.Entities.Trainer", "Trainer")
                         .WithMany("Subscriptions")
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Client");
-
-                    b.Navigation("Program");
 
                     b.Navigation("Trainer");
                 });

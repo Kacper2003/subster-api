@@ -8,6 +8,9 @@ public class SubsterDbContext : DbContext
     public SubsterDbContext(DbContextOptions<SubsterDbContext> options)
          : base(options) { }
 
-    public DbSet<User> Users { get; set; }
+    public DbSet<Trainer> Trainers { get; set; }
+    public DbSet<Client> Clients { get; set; }
     public DbSet<Subscription> Subscriptions { get; set; }
 }
+
+// dotnet ef migrations add MigrationName --project Subster.DAL --startup-project Subster.API

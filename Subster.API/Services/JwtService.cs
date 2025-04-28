@@ -16,7 +16,7 @@ public class JwtService
         _configuration = configuration;
     }
     
-    public string GenerateToken(string ssn, string name, string role = "trainer")
+    public string GenerateToken(string ssn, string name, string role)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
@@ -27,7 +27,7 @@ public class JwtService
         {
             new Claim("Ssn", ssn),
             new Claim("Name", name),
-            new Claim("Role", role),
+            new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

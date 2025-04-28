@@ -12,17 +12,19 @@ public class AuthController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
     private readonly JwtService _jwtService;
-    private readonly IUserService _userService;
+    private readonly ITrainerService _trainerService;
+    private readonly IClientService _clientService;
 
-    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService, IUserService userService)
+    public AuthController(ITaktikalAuthService taktikalAuthService, JwtService jwtService, ITrainerService trainerService, IClientService clientService)
     {
         _taktikalAuthService = taktikalAuthService;
         _jwtService = jwtService;
-        _userService = userService;
+        _trainerService = trainerService;
+        _clientService = clientService;
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] AuthInputModel inputModel)
+    [HttpPost("login/trainer")]
+    public async Task<IActionResult> LoginTrainer([FromBody] AuthInputModel inputModel)
     {
         var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
         if (!authResult.Authenticated)
@@ -30,13 +32,42 @@ public class AuthController : ControllerBase
             return BadRequest(authResult);
         }
 
-        await _userService.CreateUserIfNotExistsAsync(new UserInputModel
+        var firstTimeLogin = await _trainerService.CreateTrainerIfNotExistsAsync(new UserInputModel
         {
             Ssn = authResult.Customer.Ssn,
             Name = authResult.Customer.Name
         });
 
-        var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name);
+        var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name, "Trainer");
+
+        Response.Cookies.Append("jwt", token, new CookieOptions
+        {
+            HttpOnly = true
+        });
+
+        return Ok(new {
+            Authenticated = true,
+            Customer = authResult.Customer,
+            IsFirstTimeLogin = firstTimeLogin
+        });
+    }
+
+    [HttpPost("login/client")]
+    public async Task<IActionResult> LoginClient([FromBody] AuthInputModel inputModel)
+    {
+        var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
+        if (!authResult.Authenticated)
+        {
+            return BadRequest(authResult);
+        }
+
+        await _clientService.CreateClientIfNotExistsAsync(new UserInputModel
+        {
+            Ssn = authResult.Customer.Ssn,
+            Name = authResult.Customer.Name
+        });
+
+        var token = _jwtService.GenerateToken(authResult.Customer.Ssn, authResult.Customer.Name, "Client");
 
         Response.Cookies.Append("jwt", token, new CookieOptions
         {
