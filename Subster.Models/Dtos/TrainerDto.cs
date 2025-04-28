@@ -1,6 +1,6 @@
 namespace Subster.Models.Dtos;
 
-public class UserDto
+public class TrainerDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";

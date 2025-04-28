@@ -15,28 +15,28 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task CreateSubscriptionAsync(string clientSsn, string clientName, int userId)
+    public async Task CreateSubscriptionAsync(string clientSsn, string clientName, int trainerId)
     {
         var subscription = new Subscription
         {
-            ClientName = clientName,
+            // ClientName = clientName,
             ClientSsn = clientSsn,
             CreatedAt = DateTime.UtcNow,
-            UserId = userId
+            TrainerId = trainerId
         };
 
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int userId)
+    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId)
     {
         var subscriptions = await _dbContext.Subscriptions
-            .Where(s => s.UserId == userId)
+            .Where(s => s.TrainerId == trainerId)
             .Select(s => new SubscriptionDto
             {
                 Id = s.Id,
-                ClientName = s.ClientName,
+                // ClientName = s.ClientName,
                 ClientSsn = s.ClientSsn,
                 CreatedAt = s.CreatedAt
             })

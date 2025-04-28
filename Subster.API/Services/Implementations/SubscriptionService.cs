@@ -7,34 +7,34 @@ namespace Subster.API.Services.Implementations;
 
 public class SubscriptionService : ISubscriptionService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly ITrainerRepository _trainerRepository;
     private readonly ISubscriptionRepository _subscriptionRepository;
 
-    public SubscriptionService(IUserRepository userRepository, ISubscriptionRepository subscriptionRepository)
+    public SubscriptionService(ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository)
     {
-        _userRepository = userRepository;
+        _trainerRepository = trainerRepository;
         _subscriptionRepository = subscriptionRepository;
     }
 
     public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel)
     {
-        var user = await _userRepository.GetUserBySsnAsync(inputModel.UserSsn);
-        if (user == null)
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(inputModel.TrainerSsn);
+        if (trainer == null)
         {
-            throw new Exception("User not found");
+            throw new Exception("Trainer not found");
         }
 
-        await _subscriptionRepository.CreateSubscriptionAsync(inputModel.ClientSsn, inputModel.ClientName, user.Id);
+        await _subscriptionRepository.CreateSubscriptionAsync(inputModel.ClientSsn, inputModel.ClientName, trainer.Id);
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(string ssn)
     {
-        var user = await _userRepository.GetUserBySsnAsync(ssn);
-        if (user == null)
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+        if (trainer == null)
         {
-            throw new Exception("User not found");
+            throw new Exception("Trainer not found");
         }
 
-        return await _subscriptionRepository.GetSubscriptionsAsync(user.Id);
+        return await _subscriptionRepository.GetSubscriptionsAsync(trainer.Id);
     }
 }
