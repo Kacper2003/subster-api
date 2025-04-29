@@ -11,8 +11,5 @@ public class ProgramInputModel
     public decimal? UnitPriceExcludingVat { get; set; }
     public decimal? UnitPriceIncludingVat { get; set; }
     public decimal VatPercentage { get; set; } = 24;
-    [Required]
-    [Range(1, 12)]
-    public int DurationInMonths { get; set; }
     public bool IsActive { get; set; } = true;
 }

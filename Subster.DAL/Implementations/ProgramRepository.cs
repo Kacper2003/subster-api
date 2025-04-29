@@ -58,7 +58,6 @@ public class ProgramRepository : IProgramRepository
             UnitPriceExcludingVat  = excl,
             UnitPriceIncludingVat  = incl,
             VatPercentage          = inputModel.VatPercentage,
-            DurationInMonths       = inputModel.DurationInMonths,
             IsActive               = inputModel.IsActive,
             TrainerId              = trainerId,
         };
@@ -81,7 +80,6 @@ public class ProgramRepository : IProgramRepository
                 UnitPriceExcludingVat   = p.UnitPriceExcludingVat,
                 UnitPriceIncludingVat   = p.UnitPriceIncludingVat,
                 VatPercentage           = p.VatPercentage,
-                DurationInMonths        = p.DurationInMonths,
             })
             .ToListAsync();
 
@@ -100,7 +98,6 @@ public class ProgramRepository : IProgramRepository
                 UnitPriceExcludingVat   = p.UnitPriceExcludingVat,
                 UnitPriceIncludingVat   = p.UnitPriceIncludingVat,
                 VatPercentage           = p.VatPercentage,
-                DurationInMonths        = p.DurationInMonths,
             })
             .FirstOrDefaultAsync();
 

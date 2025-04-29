@@ -7,5 +7,5 @@ public interface IClientRepository
 {
     Task<IEnumerable<ClientDto>> GetAllClientsAsync();
     Task<ClientDto?> GetClientBySsnAsync(string ssn);
-    Task CreateClientAsync(UserInputModel inputModel);
+    Task<int> CreateClientAsync(UserInputModel inputModel);
 }

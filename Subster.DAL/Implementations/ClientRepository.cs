@@ -42,28 +42,30 @@ public class ClientRepository : IClientRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task CreateClientAsync(UserInputModel inputModel)
+    public async Task<int> CreateClientAsync(UserInputModel inputModel)
     {
-        // Check if trainer already exists
+        // Check if client already exists
         var existingClient = _dbContext.Clients
             .FirstOrDefault(u => u.Ssn == inputModel.Ssn);
 
         if (existingClient == null)
         {
-            var trainer = new Client
+            var client = new Client
             {
                 Name = inputModel.Name,
                 Ssn = inputModel.Ssn,
                 // CreatedAt = DateTime.UtcNow
             };
 
-            // Save new trainer to database
-            _dbContext.Clients.Add(trainer);
+            // Save new client to database
+            _dbContext.Clients.Add(client);
             await _dbContext.SaveChangesAsync();
+            return client.Id;
         } else {
-            // Update trainer name if it has changed
+            // Update client name if it has changed
             existingClient.Name = inputModel.Name;
             await _dbContext.SaveChangesAsync();
+            return existingClient.Id;
         }
     }
 }

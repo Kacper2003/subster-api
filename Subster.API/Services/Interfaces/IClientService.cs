@@ -6,5 +6,5 @@ namespace Subster.API.Services.Interfaces;
 public interface IClientService
 {
     Task<IEnumerable<ClientDto>> GetAllClientsAsync();
-    Task CreateClientIfNotExistsAsync(UserInputModel inputModel);
+    Task<int> CreateClientIfNotExistsAsync(UserInputModel inputModel);
 }

@@ -3,8 +3,10 @@ namespace Subster.DAL.Entities;
 public class Subscription
 {
     public int Id { get; set; }
-    public string ClientSsn { get; set; } = null!;
-    public DateTime CreatedAt { get; set; }
+    public DateTime StartDate { get; set; }
+    public int DurationInMonths { get; set; }
+    public DateTime EndDate => StartDate.AddMonths(DurationInMonths);
+    public bool IsActive { get; set; } = true;
 
     // Foreign keys
     public int TrainerId { get; set; }
