@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Subster.DAL;
@@ -11,9 +12,11 @@ using Subster.DAL;
 namespace Subster.DAL.Migrations
 {
     [DbContext(typeof(SubsterDbContext))]
-    partial class SubsterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250429104334_Programs")]
+    partial class Programs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,9 +68,6 @@ namespace Subster.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("UnitPriceExcludingVat")
                         .HasColumnType("numeric");
 
@@ -79,9 +79,7 @@ namespace Subster.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TrainerId");
-
-                    b.ToTable("Programs");
+                    b.ToTable("Program");
                 });
 
             modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
@@ -153,17 +151,6 @@ namespace Subster.DAL.Migrations
                     b.ToTable("Trainers");
                 });
 
-            modelBuilder.Entity("Subster.DAL.Entities.Program", b =>
-                {
-                    b.HasOne("Subster.DAL.Entities.Trainer", "Trainer")
-                        .WithMany("Programs")
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Trainer");
-                });
-
             modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
                 {
                     b.HasOne("Subster.DAL.Entities.Client", "Client")
@@ -198,8 +185,6 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Trainer", b =>
                 {
-                    b.Navigation("Programs");
-
                     b.Navigation("Subscriptions");
                 });
 #pragma warning restore 612, 618

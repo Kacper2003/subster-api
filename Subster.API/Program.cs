@@ -59,12 +59,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();  
+builder.Services.AddScoped<IProgramRepository, ProgramRepository>();
 
 builder.Services.AddScoped<IPaydayService, PaydayService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IProgramService, ProgramService>();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddTransient<EncryptionHelper>();
