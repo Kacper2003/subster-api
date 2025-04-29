@@ -10,6 +10,7 @@ using Subster.API.Services.Implementations;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +84,17 @@ builder.Services.AddDbContext<SubsterDbContext>(options =>
     )
 );
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Subster API",
+        Version = "v1",
+        Description = "API for personal trainers and their clients"
+    });
+});
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
@@ -99,10 +111,10 @@ using (var scoper = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();         // Generates JSON
+    app.UseSwaggerUI();       // Enables the UI (at /swagger)
 }
 
 app.UseAuthentication();
