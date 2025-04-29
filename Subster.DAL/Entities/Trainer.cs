@@ -11,5 +11,6 @@ public class Trainer
     public string? PaydayClientSecret { get; set; }
 
     // Navigation properties
+    public ICollection<Program> Programs { get; set; } = [];
     public ICollection<Subscription> Subscriptions { get; set; } = [];
 }

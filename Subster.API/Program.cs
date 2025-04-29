@@ -10,6 +10,7 @@ using Subster.API.Services.Implementations;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,12 +60,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();  
+builder.Services.AddScoped<IProgramRepository, ProgramRepository>();
 
 builder.Services.AddScoped<IPaydayService, PaydayService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IProgramService, ProgramService>();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddTransient<EncryptionHelper>();
@@ -80,6 +83,17 @@ builder.Services.AddDbContext<SubsterDbContext>(options =>
         builder.Configuration.GetConnectionString("SubsterDb")
     )
 );
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Subster API",
+        Version = "v1",
+        Description = "API for personal trainers and their clients"
+    });
+});
 
 var app = builder.Build();
 
@@ -97,10 +111,10 @@ using (var scoper = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();         // Generates JSON
+    app.UseSwaggerUI();       // Enables the UI (at /swagger)
 }
 
 app.UseAuthentication();
