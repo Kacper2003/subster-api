@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Subster.DAL;
@@ -11,9 +12,11 @@ using Subster.DAL;
 namespace Subster.DAL.Migrations
 {
     [DbContext(typeof(SubsterDbContext))]
-    partial class SubsterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250429105807_ProgramsFix")]
+    partial class ProgramsFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -95,17 +98,15 @@ namespace Subster.DAL.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DurationInMonths")
-                        .HasColumnType("integer");
+                    b.Property<string>("ClientSsn")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ProgramId")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TrainerId")
                         .HasColumnType("integer");

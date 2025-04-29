@@ -16,12 +16,14 @@ public class ClientService : IClientService
 
     public async Task<IEnumerable<ClientDto>> GetAllClientsAsync() => await _clientRepository.GetAllClientsAsync();
 
-    public async Task CreateClientIfNotExistsAsync(UserInputModel inputModel)
+    public async Task<int> CreateClientIfNotExistsAsync(UserInputModel inputModel)
     {
-        var trainer = await _clientRepository.GetClientBySsnAsync(inputModel.Ssn);
-        if (trainer == null)
+        var client = await _clientRepository.GetClientBySsnAsync(inputModel.Ssn);
+        if (client == null)
         {
-            await _clientRepository.CreateClientAsync(inputModel);
+            var clientId = await _clientRepository.CreateClientAsync(inputModel);
+            return clientId;
         }
+        return client.Id;
     }
 }

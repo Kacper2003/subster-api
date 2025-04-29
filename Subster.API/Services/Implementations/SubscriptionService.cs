@@ -9,22 +9,31 @@ public class SubscriptionService : ISubscriptionService
 {
     private readonly ITrainerRepository _trainerRepository;
     private readonly ISubscriptionRepository _subscriptionRepository;
+    private readonly IProgramRepository _programRepository;
 
-    public SubscriptionService(ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository)
+    public SubscriptionService(ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository, IProgramRepository programRepository)
     {
         _trainerRepository = trainerRepository;
         _subscriptionRepository = subscriptionRepository;
+        _programRepository = programRepository;
     }
 
-    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel)
+    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, int clientId)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(inputModel.TrainerSsn);
+        
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
         if (trainer == null)
         {
             throw new Exception("Trainer not found");
         }
 
-        await _subscriptionRepository.CreateSubscriptionAsync(inputModel.ClientSsn, inputModel.ClientName, trainer.Id);
+        var program = await _programRepository.GetProgramByIdAsync(trainer.Id, inputModel.ProgramId);
+        if (program == null)
+        {
+            throw new Exception("Program not found");
+        }
+
+        await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(string ssn)
@@ -36,5 +45,16 @@ public class SubscriptionService : ISubscriptionService
         }
 
         return await _subscriptionRepository.GetSubscriptionsAsync(trainer.Id);
+    }
+
+    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(string ssn, int subscriptionId)
+    {
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+        if (trainer == null)
+        {
+            throw new Exception("Trainer not found");
+        }
+
+        return await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId);
     }
 }
