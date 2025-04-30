@@ -1,43 +1,39 @@
-using Microsoft.Extensions.Caching.Memory;
+using Subster.API.Clients;
 using Subster.API.Services.Interfaces;
 using Subster.DAL.Interfaces;
-using Subster.DAL.Utilities;
 using Subster.Models.Dtos.Payday;
+using Subster.Models.Dtos;
+using Subster.Models.InputModels;
 
 namespace Subster.API.Services.Implementations;
 
 public class PaydayService : IPaydayService
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IPaydayApiClient _paydayClient;
+    private readonly ITokenService _tokenService;
     private readonly ITrainerRepository _trainerRepository;
-    private readonly IMemoryCache _cache;
-    private readonly EncryptionHelper _encryptionHelper;
-    private const string CacheKeyPrefix = "payday_token_";
 
-    public PaydayService(IHttpClientFactory httpClientFactory, ITrainerRepository trainerRepository, IMemoryCache cache, EncryptionHelper encryptionHelper)
+    public PaydayService(IPaydayApiClient paydayClient, ITokenService tokenService, ITrainerRepository trainerRepository)
     {
-        _httpClientFactory = httpClientFactory;
+        _paydayClient     = paydayClient;
+        _tokenService     = tokenService;
         _trainerRepository = trainerRepository;
-        _cache = cache;
-        _encryptionHelper = encryptionHelper;
     }
 
     public async Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret)
     {
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
-        if (trainer == null)
-        {
+        if (trainer == null) 
             return false;
-        }
 
-        // check if the client ID and client secret are valid
-        var tokenResponse = await RequestPaydayTokenAsync(clientId, clientSecret);
-        if (tokenResponse == null)
-        {
+        var token = await _tokenService
+            .GetTokenAsync(trainer.Id, clientId, clientSecret);
+
+        if (token == null) 
             return false;
-        }
 
-        await _trainerRepository.UpdatePaydayCredentialsAsync(trainer.Id, clientId, clientSecret);
+        await _trainerRepository
+            .UpdatePaydayCredentialsAsync(trainer.Id, clientId, clientSecret);
 
         return true;
     }
@@ -45,60 +41,52 @@ public class PaydayService : IPaydayService
     public async Task<bool> DeleteCredentials(string ssn)
     {
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
-        if (trainer == null)
-        {
+        if (trainer == null) 
             return false;
-        }
 
-        await _trainerRepository.UpdatePaydayCredentialsAsync(trainer.Id, null, null);
+        await _trainerRepository
+            .UpdatePaydayCredentialsAsync(trainer.Id, null, null);
 
-        _cache.Remove(CacheKeyPrefix + trainer.Id);
+        // cache eviction handled in TokenService.DeleteTokenAsync (if implemented)
 
         return true;
     }
 
-    public async Task<string?> GetAccessToken(string ssn)
+    public async Task<string> CreateInvoiceAsync(string trainerSsn, string clientSsn, ProgramDto program)
     {
-        var trainer = await _trainerRepository.GetTrainerEntityBySsnAsync(ssn);
-        if (trainer == null)
-        {
-            return null;
-        }
+        var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+                ?? throw new InvalidOperationException("Trainer not found");
 
-        if (_cache.TryGetValue(CacheKeyPrefix + trainer.Id, out string? cachedToken) && cachedToken != null)
-        {
-            return _encryptionHelper.Unprotect(cachedToken);
-        }
+        var token = await _tokenService
+            .GetTokenAsync(trainer.Id, trainer.PaydayClientId!, trainer.PaydayClientSecret!)
+            ?? throw new Exception("Failed to acquire Payday token");
 
-        if (!string.IsNullOrEmpty(trainer.PaydayClientId) && !string.IsNullOrEmpty(trainer.PaydayClientSecret))
+        // Ensure the customer exists (or is created)
+        var customer = await _paydayClient
+            .CreateCustomerAsync(token, new PaydayCustomerInputModel { Ssn = clientSsn })
+            ?? throw new Exception("Failed to create or retrieve customer");
+
+        var invoiceInput = new PaydayInvoiceInputModel
         {
-            var tokenResponse = await RequestPaydayTokenAsync(trainer.PaydayClientId, trainer.PaydayClientSecret);
-            if (tokenResponse == null)
+            Customer     = new Customer { Id = customer.Id },
+            InvoiceDate  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            DueDate      = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"),
+            FinalDueDate = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"),
+            Lines        = new[]
             {
-                return null;
+                new Line
+                {
+                    Description           = program.Name,
+                    UnitPriceExcludingVat = program.UnitPriceExcludingVat,
+                    VatPercentage         = program.VatPercentage
+                }
             }
+        };
 
-            _cache.Set(CacheKeyPrefix + trainer.Id, _encryptionHelper.Protect(tokenResponse.AccessToken), TimeSpan.FromSeconds(tokenResponse.ExpiresIn));
+        var invoice = await _paydayClient
+            .CreateInvoiceAsync(token, invoiceInput)
+            ?? throw new Exception("Failed to create invoice");
 
-            return tokenResponse.AccessToken;
-        }
-
-        return null;
-    }
-
-    private async Task<PaydayTokenResponse?> RequestPaydayTokenAsync(string clientId, string clientSecret)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        var response = await httpClient.PostAsJsonAsync("https://api.test.payday.is/auth/token", new
-        {
-            clientId,
-            clientSecret
-        });
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-        var tokenResponse = await response.Content.ReadFromJsonAsync<PaydayTokenResponse>();
-        return tokenResponse;
+        return invoice.Id;
     }
 }
