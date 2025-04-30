@@ -52,7 +52,7 @@ public class SubscriptionsController : ControllerBase
             return BadRequest("SSN not found in token");
         }
 
-        await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn, clientId);
+        await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn, clientId, clientAuthResult.Customer.Ssn);
 
         return Created();
     }

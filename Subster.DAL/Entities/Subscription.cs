@@ -17,4 +17,6 @@ public class Subscription
 
     public int ProgramId { get; set; }
     public Program Program { get; set; } = null!;
+
+    public ICollection<SubscriptionInvoice> SubscriptionInvoices { get; set; } = [];
 }

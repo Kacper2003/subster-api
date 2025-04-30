@@ -16,7 +16,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
+    public async Task<int> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
     {
         var subscription = new Subscription
         {
@@ -32,6 +32,8 @@ public class SubscriptionRepository : ISubscriptionRepository
 
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
+
+        return subscription.Id;
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId)
@@ -76,5 +78,15 @@ public class SubscriptionRepository : ISubscriptionRepository
                 EndDate             = s.EndDate,
                 DurationInMonths    = s.DurationInMonths
             }).FirstOrDefaultAsync();
+    }
+
+    public async Task CreateSubscriptionInvoiceAsync(int subscriptionId, string invoiceId)
+    {
+        await _dbContext.SubscriptionInvoices.AddAsync(new SubscriptionInvoice
+        {
+            SubscriptionId = subscriptionId,
+            PaydayInvoiceId = invoiceId
+        });
+        await _dbContext.SaveChangesAsync();
     }
 }
