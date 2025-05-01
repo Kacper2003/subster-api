@@ -24,8 +24,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
         foreach (var s in subscriptions)
         {
-            var endDate = s.StartDate.AddMonths(s.DurationInMonths).Date;
-            if (today >= endDate)
+            if (today >= s.EndDate)
             {
                 await _subscriptionRepository.DeactivateSubscriptionAsync(s.Id);
                 continue;
