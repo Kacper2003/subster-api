@@ -35,11 +35,14 @@ public class SubscriptionService : ISubscriptionService
             throw new Exception("Program not found");
         }
 
+        // Create the subscription
         var subscriptionId = await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
 
+        // Immediately create the invoice
         var paydayInvoiceId = await _paydayService.CreateInvoiceAsync(trainerSsn, clientSsn, program);
 
-        await _subscriptionRepository.CreateSubscriptionInvoiceAsync(subscriptionId, paydayInvoiceId);
+        // Create the invoice, with the cycle set to 1 (guaranteed to have cycle 1)
+        await _subscriptionRepository.CreateSubscriptionInvoiceAsync(subscriptionId, paydayInvoiceId, 1);
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(string ssn)
@@ -63,4 +66,15 @@ public class SubscriptionService : ISubscriptionService
 
         return await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId);
     }
+
+    // public async Task<IEnumerable<InvoiceDto>> GetInvoicesBySubscriptionIdAsync(string ssn, int subscriptionId)
+    // {
+    //     var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+    //     if (trainer == null)
+    //     {
+    //         throw new Exception("Trainer not found");
+    //     }
+
+    //     return await _subscriptionRepository.GetInvoicesBySubscriptionIdAsync(trainer.Id, subscriptionId);
+    // }
 }

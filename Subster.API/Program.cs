@@ -13,6 +13,14 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Subster.API.Clients;
 using System.Net.Http.Headers;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Subster.API.Jobs;
+using Subster.API.Filters;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,19 +89,41 @@ builder.Services.AddScoped<IProgramService, ProgramService>();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<ITokenService, PaydayTokenService>();
+builder.Services.AddScoped<ISubscriptionBillingService, SubscriptionBillingService>();
 builder.Services.AddTransient<EncryptionHelper>();
 
 builder.Services.AddMemoryCache();
-builder.Services.AddDataProtection();
 
 builder.Services.AddHttpClient();
 
-// Bætir við 
+var connString = builder.Configuration.GetConnectionString("SubsterDb")!;
+
+// SubsterDbContext
 builder.Services.AddDbContext<SubsterDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("SubsterDb")
+        connString
     )
 );
+
+// Data Protection
+builder.Services
+    .AddDataProtection()
+    .SetApplicationName("Subster")  // use a stable name across instances
+    .PersistKeysToDbContext<SubsterDbContext>();
+
+// Hangfire
+builder.Services.AddHangfire(config => config
+    .UsePostgreSqlStorage(
+        bootstrap => bootstrap.UseNpgsqlConnection(connString),
+        new PostgreSqlStorageOptions
+        {
+            SchemaName        = "hangfire",
+            QueuePollInterval = TimeSpan.FromHours(1),
+        }
+    )
+);
+
+builder.Services.AddHangfireServer();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -115,6 +145,23 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowCredentials());
 
+
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new AllowAllDashboardAuthorizationFilter()],
+});
+
+RecurringJob.AddOrUpdate<SubscriptionBillingJob>(
+    "subscription-billing-job",
+    job => job.ExecuteAsync(),
+    Cron.Daily(hour: 12, minute: 0),
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.Utc
+    }
+);
+
 // Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
 using (var scoper = app.Services.CreateScope())
 {
@@ -128,6 +175,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();       // Enables the UI (at /swagger)
 }
 
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
