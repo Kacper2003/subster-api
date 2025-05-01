@@ -7,18 +7,20 @@ namespace Subster.API.Services.Implementations;
 
 public class SubscriptionService : ISubscriptionService
 {
+    private readonly IPaydayService _paydayService;
     private readonly ITrainerRepository _trainerRepository;
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IProgramRepository _programRepository;
 
-    public SubscriptionService(ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository, IProgramRepository programRepository)
+    public SubscriptionService(IPaydayService paydayService, ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository, IProgramRepository programRepository)
     {
+        _paydayService = paydayService;
         _trainerRepository = trainerRepository;
         _subscriptionRepository = subscriptionRepository;
         _programRepository = programRepository;
     }
 
-    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, int clientId)
+    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, int clientId, string clientSsn)
     {
         
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
@@ -33,7 +35,14 @@ public class SubscriptionService : ISubscriptionService
             throw new Exception("Program not found");
         }
 
-        await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
+        // Create the subscription
+        var subscriptionId = await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
+
+        // Immediately create the invoice
+        var paydayInvoiceId = await _paydayService.CreateInvoiceAsync(trainerSsn, clientSsn, program);
+
+        // Create the invoice, with the cycle set to 1 (guaranteed to have cycle 1)
+        await _subscriptionRepository.CreateSubscriptionInvoiceAsync(subscriptionId, paydayInvoiceId, 1);
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(string ssn)
@@ -57,4 +66,15 @@ public class SubscriptionService : ISubscriptionService
 
         return await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId);
     }
+
+    // public async Task<IEnumerable<InvoiceDto>> GetInvoicesBySubscriptionIdAsync(string ssn, int subscriptionId)
+    // {
+    //     var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+    //     if (trainer == null)
+    //     {
+    //         throw new Exception("Trainer not found");
+    //     }
+
+    //     return await _subscriptionRepository.GetInvoicesBySubscriptionIdAsync(trainer.Id, subscriptionId);
+    // }
 }

@@ -95,10 +95,10 @@ public class AuthController : ControllerBase
     {
         var claims = User.Claims.ToDictionary(c => c.Type, c => c.Value);
 
-        foreach (var claim in claims)
-        {
-            Console.WriteLine($"{claim.Key}: {claim.Value}");
-        }
+        // foreach (var claim in claims)
+        // {
+        //     Console.WriteLine($"{claim.Key}: {claim.Value}");
+        // }
 
         return Ok(claims);
     }

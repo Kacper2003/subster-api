@@ -1,3 +1,4 @@
+using Subster.DAL.Entities;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
 
@@ -5,7 +6,10 @@ namespace Subster.DAL.Interfaces;
 
 public interface ISubscriptionRepository
 {
-    Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId);
+    Task<int> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId);
     Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId);
     Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, int subscriptionId);
+    Task CreateSubscriptionInvoiceAsync(int subscriptionId, string paydayInvoiceId, int cycleNumber);
+    Task<IEnumerable<Subscription>> GetActiveWithInvoicesAsync(DateTime asOfUtc);
+    Task DeactivateSubscriptionAsync(int subscriptionId);
 }

@@ -89,7 +89,7 @@ public class ProgramRepository : IProgramRepository
     public async Task<ProgramDto?> GetProgramByIdAsync(int trainerId, int programId)
     {
         var program = await _dbContext.Programs
-            .Where(p => p.TrainerId == trainerId && p.Id == programId)
+            .Where(p => p.TrainerId == trainerId && p.Id == programId && p.IsActive)
             .Select(p => new ProgramDto
             {
                 Id                      = p.Id,

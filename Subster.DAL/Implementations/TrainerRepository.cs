@@ -46,7 +46,7 @@ public class TrainerRepository : ITrainerRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Trainer?> GetTrainerEntityBySsnAsync(string ssn)
+    public async Task<Trainer?> FindTrainerEntityBySsnAsync(string ssn)
     {
         var trainer = await _dbContext.Trainers
             .FirstOrDefaultAsync(u => u.Ssn == ssn);

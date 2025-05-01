@@ -13,18 +13,34 @@ public class SubscriptionsController : ControllerBase
     private readonly ITaktikalAuthService _taktikalAuthService;
     private readonly ISubscriptionService _subscriptionService;
     private readonly IClientService _clientService;
+    private readonly IProgramService _programService;
 
-    public SubscriptionsController(ITaktikalAuthService taktikalAuthService, ISubscriptionService subscriptionService, IClientService clientService)
+    public SubscriptionsController(ITaktikalAuthService taktikalAuthService, ISubscriptionService subscriptionService, IClientService clientService, IProgramService programService)
     {
         _taktikalAuthService = taktikalAuthService;
         _subscriptionService = subscriptionService;
         _clientService = clientService;
+        _programService = programService;
     }
 
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateSubscription([FromBody] SubscriptionInputModel inputModel)
     {
+        // Get the user's SSN from the token
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (trainerSsn == null)
+        {
+            return BadRequest("SSN not found in token");
+        }
+
+        var program = await _programService.GetProgramByIdAsync(trainerSsn, inputModel.ProgramId);
+        if (program == null)
+        {
+            return NotFound("Program not found");
+        }
+        
+        // Get confirmation (authentication) from client
         var clientAuthResult = await _taktikalAuthService.AuthenticateAsync(new AuthInputModel
         {
             PhoneNumber = inputModel.ClientPhoneNumber,
@@ -33,26 +49,18 @@ public class SubscriptionsController : ControllerBase
 
         if (!clientAuthResult.Authenticated)
         {
-            // Client said no or could not be authenticated
             return BadRequest(clientAuthResult);
         }
 
         // Create client if it doesn't exist
-
         var clientId = await _clientService.CreateClientIfNotExistsAsync(new UserInputModel
         {
             Name = clientAuthResult.Customer.Name,
             Ssn = clientAuthResult.Customer.Ssn
         });
 
-        // Get the user's SSN from the token
-        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (trainerSsn == null)
-        {
-            return BadRequest("SSN not found in token");
-        }
-
-        await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn, clientId);
+        // Finally, create the subscription
+        await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn, clientId, clientAuthResult.Customer.Ssn);
 
         return Created();
     }
@@ -91,4 +99,24 @@ public class SubscriptionsController : ControllerBase
 
         return Ok(subscription);
     }
+
+    // [Authorize]
+    // [HttpGet("{id}/invoices")]
+    // public async Task<IActionResult> GetInvoicesBySubscriptionId(int id)
+    // {
+    //     // Get the user's SSN from the token
+    //     var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+    //     if (trainerSsn == null)
+    //     {
+    //         return BadRequest("SSN not found in token");
+    //     }
+
+    //     var invoices = await _subscriptionService.GetInvoicesBySubscriptionIdAsync(trainerSsn, id);
+    //     if (invoices == null)
+    //     {
+    //         return NotFound();
+    //     }
+
+    //     return Ok(invoices);
+    // }
 }
