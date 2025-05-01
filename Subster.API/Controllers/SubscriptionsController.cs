@@ -91,4 +91,24 @@ public class SubscriptionsController : ControllerBase
 
         return Ok(subscription);
     }
+
+    // [Authorize]
+    // [HttpGet("{id}/invoices")]
+    // public async Task<IActionResult> GetInvoicesBySubscriptionId(int id)
+    // {
+    //     // Get the user's SSN from the token
+    //     var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+    //     if (trainerSsn == null)
+    //     {
+    //         return BadRequest("SSN not found in token");
+    //     }
+
+    //     var invoices = await _subscriptionService.GetInvoicesBySubscriptionIdAsync(trainerSsn, id);
+    //     if (invoices == null)
+    //     {
+    //         return NotFound();
+    //     }
+
+    //     return Ok(invoices);
+    // }
 }

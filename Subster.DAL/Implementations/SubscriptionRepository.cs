@@ -80,13 +80,43 @@ public class SubscriptionRepository : ISubscriptionRepository
             }).FirstOrDefaultAsync();
     }
 
-    public async Task CreateSubscriptionInvoiceAsync(int subscriptionId, string invoiceId)
+    public async Task CreateSubscriptionInvoiceAsync(int subscriptionId, string invoiceId, int cycleNumber)
     {
         await _dbContext.SubscriptionInvoices.AddAsync(new SubscriptionInvoice
         {
             SubscriptionId = subscriptionId,
-            PaydayInvoiceId = invoiceId
+            CycleNumber = cycleNumber,
+            PaydayInvoiceId = invoiceId,
+            SentAt = DateTime.UtcNow
         });
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Subscription>> GetActiveWithInvoicesAsync(DateTime asOfUtc)
+    {
+        var date = asOfUtc.Date;
+
+        return await _dbContext.Subscriptions
+            .Include(s => s.Trainer)
+            .Include(s => s.Client)
+            .Include(s => s.Program)
+            .Include(s => s.SubscriptionInvoices)
+            .Where(s =>
+                s.IsActive
+                && s.StartDate.Date <= date
+            )
+            .ToListAsync();
+    }
+
+    public async Task DeactivateSubscriptionAsync(int subscriptionId)
+    {
+        var subscription = await _dbContext.Subscriptions
+            .FirstOrDefaultAsync(s => s.Id == subscriptionId);
+
+        if (subscription != null)
+        {
+            subscription.IsActive = false;
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }
