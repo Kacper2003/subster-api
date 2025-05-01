@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services;
 using Subster.API.Services.Interfaces;
+using Subster.Models.Dtos.Payday;
 using Subster.Models.InputModels;
 
 namespace Subster.API.Controllers;
@@ -51,23 +52,5 @@ public class PaydayController : ControllerBase
             return BadRequest(new { Error = "Could not delete credentials" });
         }
         return Ok();
-    }
-
-    [Authorize(Roles = "Trainer")]
-    [HttpGet("me")]
-    public async Task<IActionResult> GetPaydayInfo()
-    {
-        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(ssn))
-        {
-            return Unauthorized("SSN not found in token");
-        }
-
-        string? accessToken = await _paydayService.GetAccessToken(ssn);
-        if (accessToken == null)
-        {
-            return BadRequest(new { Error = "Could not get access token" });
-        }
-        return Ok(new { AccessToken = accessToken });
     }
 }

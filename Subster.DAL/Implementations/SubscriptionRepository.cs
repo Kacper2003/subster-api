@@ -16,7 +16,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
+    public async Task<int> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
     {
         var subscription = new Subscription
         {
@@ -32,6 +32,8 @@ public class SubscriptionRepository : ISubscriptionRepository
 
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
+
+        return subscription.Id;
     }
 
     public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId)
@@ -76,5 +78,45 @@ public class SubscriptionRepository : ISubscriptionRepository
                 EndDate             = s.EndDate,
                 DurationInMonths    = s.DurationInMonths
             }).FirstOrDefaultAsync();
+    }
+
+    public async Task CreateSubscriptionInvoiceAsync(int subscriptionId, string invoiceId, int cycleNumber)
+    {
+        await _dbContext.SubscriptionInvoices.AddAsync(new SubscriptionInvoice
+        {
+            SubscriptionId = subscriptionId,
+            CycleNumber = cycleNumber,
+            PaydayInvoiceId = invoiceId,
+            SentAt = DateTime.UtcNow
+        });
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Subscription>> GetActiveWithInvoicesAsync(DateTime asOfUtc)
+    {
+        var date = asOfUtc.Date;
+
+        return await _dbContext.Subscriptions
+            .Include(s => s.Trainer)
+            .Include(s => s.Client)
+            .Include(s => s.Program)
+            .Include(s => s.SubscriptionInvoices)
+            .Where(s =>
+                s.IsActive
+                && s.StartDate.Date <= date
+            )
+            .ToListAsync();
+    }
+
+    public async Task DeactivateSubscriptionAsync(int subscriptionId)
+    {
+        var subscription = await _dbContext.Subscriptions
+            .FirstOrDefaultAsync(s => s.Id == subscriptionId);
+
+        if (subscription != null)
+        {
+            subscription.IsActive = false;
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }
