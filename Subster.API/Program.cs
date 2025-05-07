@@ -113,6 +113,7 @@ builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProgramService, ProgramService>();
+builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<ITokenService, PaydayTokenService>();

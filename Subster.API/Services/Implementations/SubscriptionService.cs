@@ -90,15 +90,4 @@ public class SubscriptionService : ISubscriptionService
 
         await _subscriptionRepository.DeactivateSubscriptionAsync(subscriptionId);
     }
-
-    // public async Task<IEnumerable<InvoiceDto>> GetInvoicesBySubscriptionIdAsync(string trainerSsn, int subscriptionId)
-    // {
-    //     var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
-    //     if (trainer == null)
-    //     {
-    //         throw new Exception("Trainer not found");
-    //     }
-
-    //     return await _subscriptionRepository.GetInvoicesBySubscriptionIdAsync(trainer.Id, subscriptionId);
-    // }
 }
