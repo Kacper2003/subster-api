@@ -3,6 +3,7 @@ using Subster.Models.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Subster.DAL.Entities;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
 
 
 namespace Subster.DAL.Implementations;
@@ -16,7 +17,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task<SubscriptionDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
+    public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
     {
         var subscription = new Subscription
         {
@@ -33,14 +34,27 @@ public class SubscriptionRepository : ISubscriptionRepository
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
 
-        return new SubscriptionDto
+        var savedSubscription = await _dbContext.Subscriptions
+            .Include(s => s.Client)
+            .Include(s => s.Program)
+            .FirstOrDefaultAsync(s => s.Id == subscription.Id);
+
+        return new SubscriptionDetailsDto
         {
-            Id                  = subscription.Id,
-            ClientName          = subscription.Client.Name,
-            ProgramName         = subscription.Program.Name,
-            StartDate           = subscription.StartDate,
-            EndDate             = subscription.EndDate,
-            DurationInMonths    = subscription.DurationInMonths
+            Id                  = savedSubscription!.Id,
+            ClientName          = savedSubscription.Client.Name,
+            Program             = new ProgramDto
+                                    {
+                                        Id = savedSubscription.Program.Id,
+                                        Name = savedSubscription.Program.Name,
+                                        Description = savedSubscription.Program.Description,
+                                        UnitPriceExcludingVat = savedSubscription.Program.UnitPriceExcludingVat,
+                                        UnitPriceIncludingVat = savedSubscription.Program.UnitPriceIncludingVat,
+                                        VatPercentage = savedSubscription.Program.VatPercentage,
+                                    },
+            StartDate           = savedSubscription.StartDate,
+            EndDate             = savedSubscription.EndDate,
+            DurationInMonths    = savedSubscription.DurationInMonths
         };
     }
 
@@ -114,6 +128,49 @@ public class SubscriptionRepository : ISubscriptionRepository
                 && s.StartDate.Date <= date
             )
             .ToListAsync();
+    }
+
+    public async Task<SubscriptionDetailsDto?> UpdateSubscriptionAsync(Guid subscriptionId, SubscriptionUpdateModel updateModel, int trainerId)
+    {
+        var subscription = await _dbContext.Subscriptions
+            .Include(s => s.Program)
+            .FirstOrDefaultAsync(s => s.TrainerId == trainerId && s.Id == subscriptionId);
+
+        if (subscription == null)
+            return null;
+
+        if (updateModel.StartDate.HasValue)
+        {
+            // check if it has started 
+            if (subscription.StartDate.Date < DateTime.UtcNow.Date)
+                throw new InvalidOperationException("Cannot change start date of an already started subscription.");
+            
+            if (updateModel.StartDate.Value.Date < DateTime.UtcNow.Date)
+                throw new InvalidOperationException("Start date cannot be in the past.");
+
+            subscription.StartDate = updateModel.StartDate.Value;
+
+            // save 
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return new SubscriptionDetailsDto
+        {
+            Id                  = subscription.Id,
+            ClientName          = subscription.Client.Name,
+            Program             = new ProgramDto
+                                    {
+                                        Id = subscription.Program.Id,
+                                        Name = subscription.Program.Name,
+                                        Description = subscription.Program.Description,
+                                        UnitPriceExcludingVat = subscription.Program.UnitPriceExcludingVat,
+                                        UnitPriceIncludingVat = subscription.Program.UnitPriceIncludingVat,
+                                        VatPercentage = subscription.Program.VatPercentage,
+                                    },
+            StartDate           = subscription.StartDate,
+            EndDate             = subscription.EndDate,
+            DurationInMonths    = subscription.DurationInMonths
+        };     
     }
 
     public async Task DeactivateSubscriptionAsync(Guid subscriptionId)

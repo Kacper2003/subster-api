@@ -39,10 +39,10 @@ public class ProgramService : IProgramService
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
         // Will return null if not found or not owned → we map to 404
-        var updated = await _programRepository.UpdateProgramAsync(programId, updateModel, trainer.Id)
+        var updatedProgram = await _programRepository.UpdateProgramAsync(programId, updateModel, trainer.Id)
             ?? throw new NotFoundException($"Program with id {programId} not found.");
 
-        return updated;
+        return updatedProgram;
     }
 
     public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(string trainerSsn)

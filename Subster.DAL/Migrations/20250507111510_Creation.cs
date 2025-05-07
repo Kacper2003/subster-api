@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Subster.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class Recreate : Migration
+    public partial class Creation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -86,8 +86,7 @@ namespace Subster.DAL.Migrations
                 name: "Subscriptions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DurationInMonths = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
@@ -122,9 +121,8 @@ namespace Subster.DAL.Migrations
                 name: "SubscriptionInvoices",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SubscriptionId = table.Column<int>(type: "integer", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionId = table.Column<Guid>(type: "uuid", nullable: false),
                     CycleNumber = table.Column<int>(type: "integer", nullable: false),
                     PaydayInvoiceId = table.Column<string>(type: "text", nullable: false),
                     SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

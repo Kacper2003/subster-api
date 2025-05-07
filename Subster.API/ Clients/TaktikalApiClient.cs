@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Net.Http.Json;
 using Subster.Models.InputModels;
 using Subster.Models.ResponseModels;
 
@@ -17,6 +15,7 @@ public class TaktikalApiClient : ITaktikalApiClient
     {
         var resp = await _http.PostAsJsonAsync(StartPath, dto);
         if (!resp.IsSuccessStatusCode) return null;
+        Console.WriteLine(await resp.Content.ReadAsStringAsync());
         return await resp.Content.ReadFromJsonAsync<StartAuthResponseModel>();
     }
 

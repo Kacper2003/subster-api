@@ -22,6 +22,6 @@ public class Line
     public int Quantity { get; set; } = 1;
     public decimal UnitPriceExcludingVat { get; set; }
     // public decimal UnitPriceIncludingVat { get; set; }
-    public decimal VatPercentage { get; set; } 
+    public decimal VatPercentage { get; set; } = 0;
     public decimal DiscountPercentage { get; set; } = 0;
 }

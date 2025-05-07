@@ -10,6 +10,8 @@ namespace Subster.API.Controllers;
 
 [ApiController]
 [Route("api/subscriptions")]
+[Produces("application/json")]
+[Consumes("application/json")]
 public class SubscriptionsController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
