@@ -85,7 +85,7 @@ public class SubscriptionService : ISubscriptionService
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-        var existing = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
+        var existingSubscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
             ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
 
         await _subscriptionRepository.DeactivateSubscriptionAsync(subscriptionId);

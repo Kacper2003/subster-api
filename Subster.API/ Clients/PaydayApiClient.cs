@@ -38,9 +38,6 @@ public class PaydayApiClient : IPaydayApiClient
         _http.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
 
-        Console.WriteLine($"Creating invoice with access token: {accessToken}");
-        Console.WriteLine($"Invoice input: {input.Customer},");
-
         var resp = await _http.PostAsJsonAsync(InvoicesUri, input);
         Console.WriteLine($"Response: {await resp.Content.ReadAsStringAsync()}");
         resp.EnsureSuccessStatusCode();

@@ -77,12 +77,55 @@ public class SubscriptionRepository : ISubscriptionRepository
         
     }
 
+    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsByClientIdAsync(int clientId)
+    {
+        return await _dbContext.Subscriptions
+            .Include(s => s.Client)
+            .Include(s => s.Program)
+            .Where(s => s.ClientId == clientId && s.IsActive)
+            .Select(s => new SubscriptionDto
+            {
+                Id                  = s.Id,
+                ClientName          = s.Client.Name,
+                ProgramName         = s.Program.Name,
+                StartDate           = s.StartDate,
+                EndDate             = s.EndDate,
+                DurationInMonths    = s.DurationInMonths
+            })
+            .ToListAsync();
+    }
+
     public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, Guid subscriptionId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
             .Include(s => s.Program)
             .Where(s => s.TrainerId == trainerId && s.Id == subscriptionId)
+            .Select(s => new SubscriptionDetailsDto
+            {
+                Id                  = s.Id,
+                ClientName          = s.Client.Name,
+                Program             = new ProgramDto
+                                    {
+                                        Id = s.Program.Id,
+                                        Name = s.Program.Name,
+                                        Description = s.Program.Description,
+                                        UnitPriceExcludingVat = s.Program.UnitPriceExcludingVat,
+                                        UnitPriceIncludingVat = s.Program.UnitPriceIncludingVat,
+                                        VatPercentage = s.Program.VatPercentage,
+                                    },
+                StartDate           = s.StartDate,
+                EndDate             = s.EndDate,
+                DurationInMonths    = s.DurationInMonths
+            }).FirstOrDefaultAsync();
+    }
+
+    public async Task<SubscriptionDetailsDto?> GetClientSubscriptionByIdAsync(int clientId, Guid subscriptionId)
+    {
+        return await _dbContext.Subscriptions
+            .Include(s => s.Client)
+            .Include(s => s.Program)
+            .Where(s => s.ClientId == clientId && s.Id == subscriptionId)
             .Select(s => new SubscriptionDetailsDto
             {
                 Id                  = s.Id,
