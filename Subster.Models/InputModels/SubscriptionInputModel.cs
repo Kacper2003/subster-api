@@ -12,5 +12,5 @@ public class SubscriptionInputModel
     [Range(1, 12)]
     public int DurationInMonths { get; set; }
     [Required]
-    public int ProgramId { get; set; }
+    public Guid ProgramId { get; set; }
 }

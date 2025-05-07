@@ -6,10 +6,10 @@ namespace Subster.DAL.Interfaces;
 
 public interface ISubscriptionRepository
 {
-    Task<int> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId);
-    Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId);
-    Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, int subscriptionId);
-    Task CreateSubscriptionInvoiceAsync(int subscriptionId, string paydayInvoiceId, int cycleNumber);
+    Task<SubscriptionDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId);
+    Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(int trainerId);
+    Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, Guid subscriptionId);
     Task<IEnumerable<Subscription>> GetActiveWithInvoicesAsync(DateTime asOfUtc);
-    Task DeactivateSubscriptionAsync(int subscriptionId);
+    Task CreateSubscriptionInvoiceAsync(Guid subscriptionId, string paydayInvoiceId, int cycleNumber);
+    Task DeactivateSubscriptionAsync(Guid subscriptionId);
 }

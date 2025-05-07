@@ -6,9 +6,14 @@ namespace Subster.DAL.Interfaces;
 
 public interface ITrainerRepository
 {
+    // existing:
     Task<IEnumerable<TrainerDto>> GetAllTrainersAsync();
-    Task<TrainerDto?> GetTrainerBySsnAsync(string ssn);
-    Task<Trainer?> FindTrainerEntityBySsnAsync(string ssn);
-    Task CreateTrainerAsync(UserInputModel inputModel);
-    Task UpdatePaydayCredentialsAsync(int trainerId, string? clientId, string? clientSecret);
+    Task<TrainerDto?>           GetTrainerBySsnAsync(string ssn);
+    Task<Trainer?>              FindTrainerEntityBySsnAsync(string ssn);
+    Task                        CreateTrainerAsync(UserInputModel input);
+    Task                        UpdatePaydayCredentialsAsync(int trainerId, string? clientId, string? clientSecret);
+    Task<Trainer?> FindTrainerEntityByIdAsync(int id);
+    Task<TrainerDto?> GetTrainerByIdAsync(int id);
+    Task DeleteTrainerAsync(int id);
+    Task<bool> ExistsBySsnAsync(string ssn);
 }

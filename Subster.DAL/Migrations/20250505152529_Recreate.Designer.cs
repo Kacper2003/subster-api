@@ -12,18 +12,37 @@ using Subster.DAL;
 namespace Subster.DAL.Migrations
 {
     [DbContext(typeof(SubsterDbContext))]
-    [Migration("20250429163637_ProgramTweaks")]
-    partial class ProgramTweaks
+    [Migration("20250505152529_Recreate")]
+    partial class Recreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys");
+                });
 
             modelBuilder.Entity("Subster.DAL.Entities.Client", b =>
                 {
@@ -48,11 +67,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Program", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -101,8 +118,8 @@ namespace Subster.DAL.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -119,6 +136,34 @@ namespace Subster.DAL.Migrations
                     b.HasIndex("TrainerId");
 
                     b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("Subster.DAL.Entities.SubscriptionInvoice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CycleNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PaydayInvoiceId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SubscriptionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.ToTable("SubscriptionInvoices");
                 });
 
             modelBuilder.Entity("Subster.DAL.Entities.Trainer", b =>
@@ -143,7 +188,6 @@ namespace Subster.DAL.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Ssn")
@@ -193,9 +237,25 @@ namespace Subster.DAL.Migrations
                     b.Navigation("Trainer");
                 });
 
+            modelBuilder.Entity("Subster.DAL.Entities.SubscriptionInvoice", b =>
+                {
+                    b.HasOne("Subster.DAL.Entities.Subscription", "Subscription")
+                        .WithMany("SubscriptionInvoices")
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subscription");
+                });
+
             modelBuilder.Entity("Subster.DAL.Entities.Program", b =>
                 {
                     b.Navigation("Subscriptions");
+                });
+
+            modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
+                {
+                    b.Navigation("SubscriptionInvoices");
                 });
 
             modelBuilder.Entity("Subster.DAL.Entities.Trainer", b =>

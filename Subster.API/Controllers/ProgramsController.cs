@@ -2,11 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
+using Subster.Models.Dtos;
+using Subster.Models;
 
 namespace Subster.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/programs")]
+[Produces("application/json")]
+[Consumes("application/json")]
 public class ProgramsController : ControllerBase
 {
     private readonly IProgramService _programService;
@@ -16,63 +21,82 @@ public class ProgramsController : ControllerBase
         _programService = programService;
     }
 
-    [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> CreateProgram([FromBody] ProgramInputModel inputModel)
-    {
-        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(ssn))
-        {
-            return Unauthorized("SSN not found in token");
-        }
-        await _programService.CreateProgramAsync(inputModel, ssn);
-        return Created();
-    }
-
-    [Authorize]
+    [Authorize(Roles = "Trainer")]
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ProgramDto>), 200)]
     public async Task<IActionResult> GetPrograms()
     {
-        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(ssn))
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
         {
             return Unauthorized("SSN not found in token");
-        }
+        } 
 
-        var programs = await _programService.GetAllProgramsAsync(ssn);
+        var programs = await _programService.GetAllProgramsAsync(trainerSsn);
         return Ok(programs);
     }
 
-    [Authorize]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetProgramById(int id)
+    [Authorize(Roles = "Trainer")]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ProgramDto), 200)]
+    public async Task<IActionResult> GetProgramById(Guid id)
     {
-        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(ssn))
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
         {
             return Unauthorized("SSN not found in token");
         }
 
-        var program = await _programService.GetProgramByIdAsync(ssn, id);
-        if (program == null)
-        {
-            return NotFound();
-        }
+        var program = await _programService.GetProgramByIdAsync(trainerSsn, id);
 
         return Ok(program);
     }
 
-    [Authorize]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeactivateProgram(int id)
+
+    [Authorize(Roles = "Trainer")]
+    [HttpPost]
+    [ProducesResponseType(typeof(ProgramDto), 201)]
+    [ProducesResponseType(typeof(ApiError), 400)]
+    public async Task<IActionResult> CreateProgram([FromBody] ProgramInputModel inputModel)
     {
-        var ssn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(ssn))
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
+        {
+            return Unauthorized("SSN not found in token");
+        }
+        var program = await _programService.CreateProgramAsync(inputModel, trainerSsn);
+        return CreatedAtAction(nameof(GetProgramById), new { id = program.Id }, program);
+    }
+
+    [Authorize(Roles = "Trainer")]
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ProgramDto), 200)]
+    [ProducesResponseType(typeof(ApiError), 400)]
+    public async Task<IActionResult> UpdateProgram(Guid id, [FromBody] ProgramUpdateModel updateModel)
+    {
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
         {
             return Unauthorized("SSN not found in token");
         }
 
-        await _programService.DeactivateProgramAsync(ssn, id);
+        var updatedProgram = await _programService.UpdateProgramAsync(id, updateModel, trainerSsn);
+        return Ok(updatedProgram);
+    }
+
+    [Authorize(Roles = "Trainer")]
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ApiError), 409)]
+    public async Task<IActionResult> DeactivateProgram(Guid id)
+    {
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
+        {
+            return Unauthorized("SSN not found in token");
+        }
+
+        await _programService.DeactivateProgramAsync(trainerSsn, id);
         return NoContent();
     }
 }

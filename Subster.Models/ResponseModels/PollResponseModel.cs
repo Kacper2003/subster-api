@@ -1,6 +1,8 @@
-namespace Subster.Models.Dtos;
+using Subster.Models.Dtos;
 
-public class PollResponse
+namespace Subster.Models.ResponseModels;
+
+public class PollResponseModel
 {
     public bool WaitingForUserInput { get; set; }
     public string StatusMessage { get; set; } = null!;

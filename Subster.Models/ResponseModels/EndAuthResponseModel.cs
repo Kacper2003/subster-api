@@ -1,6 +1,8 @@
-namespace Subster.Models.Dtos;
+using Subster.Models.Dtos;
 
-public class TaktikalAuthResult
+namespace Subster.Models.ResponseModels;
+
+public class EndAuthResponseModel
 {
     /// <summary>
     /// True if authentication succeeded.
