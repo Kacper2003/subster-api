@@ -2,7 +2,7 @@ namespace Subster.Models.Dtos;
 
 public class SubscriptionDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string ClientName { get; set; } = null!;
     public string ProgramName { get; set; } = null!;
     public DateTime StartDate { get; set; }

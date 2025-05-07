@@ -1,8 +1,10 @@
 using Subster.DAL.Interfaces;
 using Subster.DAL.Entities;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
 using Subster.Models.Dtos;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace Subster.DAL.Implementations;
 
@@ -15,7 +17,7 @@ public class ProgramRepository : IProgramRepository
         _dbContext = dbContext;
     }
 
-    public async Task CreateProgramAsync(ProgramInputModel inputModel, int trainerId)
+    public async Task<ProgramDto> CreateProgramAsync(ProgramInputModel inputModel, int trainerId)
     {
         // Validate the vat
         if (inputModel.VatPercentage < 0 || inputModel.VatPercentage > 100)
@@ -64,6 +66,17 @@ public class ProgramRepository : IProgramRepository
 
         await _dbContext.Programs.AddAsync(program);
         await _dbContext.SaveChangesAsync();
+
+        return new ProgramDto
+        {
+            Id                      = program.Id,
+            Name                    = program.Name,
+            Description             = program.Description,
+            UnitPriceExcludingVat   = program.UnitPriceExcludingVat,
+            UnitPriceIncludingVat   = program.UnitPriceIncludingVat,
+            VatPercentage           = program.VatPercentage,
+            IsActive                = program.IsActive,
+        };
     }
 
 
@@ -86,7 +99,7 @@ public class ProgramRepository : IProgramRepository
         return programs;
     }
 
-    public async Task<ProgramDto?> GetProgramByIdAsync(int trainerId, int programId)
+    public async Task<ProgramDto?> GetProgramByIdAsync(int trainerId, Guid programId)
     {
         var program = await _dbContext.Programs
             .Where(p => p.TrainerId == trainerId && p.Id == programId && p.IsActive)
@@ -103,14 +116,72 @@ public class ProgramRepository : IProgramRepository
 
         return program;
     }
+
+    public async Task<ProgramDto?> UpdateProgramAsync(Guid programId, ProgramUpdateModel updateModel, int trainerId)
+    {
+        var program = await _dbContext.Programs
+            .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);
+
+        if (program == null)
+            return null;
+
+        var newVat = updateModel.VatPercentage ?? program.VatPercentage;
+        if (newVat < 0 || newVat > 100)
+            throw new ArgumentException("VatPercentage must be between 0 and 100.");
+
+        var exclProvided = updateModel.UnitPriceExcludingVat.HasValue;
+        var inclProvided = updateModel.UnitPriceIncludingVat.HasValue;
+
+        if ((exclProvided && updateModel.UnitPriceExcludingVat < 0) ||
+            (inclProvided && updateModel.UnitPriceIncludingVat < 0))
+            throw new ArgumentException("Price values cannot be negative.");
+
+        decimal excl, incl;
+        if (exclProvided)
+        {
+            excl = updateModel.UnitPriceExcludingVat!.Value;
+            incl = Math.Round(excl * (1 + newVat / 100m), 2);
+        }
+        else if (inclProvided)
+        {
+            incl = updateModel.UnitPriceIncludingVat!.Value;
+            excl = Math.Round(incl / (1 + newVat / 100m), 2);
+        }
+        else
+        {
+            excl = program.UnitPriceExcludingVat;
+            incl = Math.Round(excl * (1 + newVat / 100m), 2);
+        }
+
+        program.Name                   = updateModel.Name                 ?? program.Name;
+        program.Description            = updateModel.Description          ?? program.Description;
+        program.UnitPriceExcludingVat = excl;
+        program.UnitPriceIncludingVat = incl;
+        program.VatPercentage          = newVat;
+
+        await _dbContext.SaveChangesAsync();
+
+        return new ProgramDto
+        {
+            Id                    = program.Id,
+            Name                  = program.Name,
+            Description           = program.Description,
+            UnitPriceExcludingVat = program.UnitPriceExcludingVat,
+            UnitPriceIncludingVat = program.UnitPriceIncludingVat,
+            VatPercentage         = program.VatPercentage,
+            IsActive              = program.IsActive,
+        };
+    }
     
-    public async Task DeactivateProgramAsync(int trainerId, int programId)
+    public async Task DeactivateProgramAsync(int trainerId, Guid programId)
     {
         var program = await _dbContext.Programs
             .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);
 
         if (program != null)
         {
+            if (!program.IsActive) throw new InvalidOperationException("Program is already inactive.");
+            
             program.IsActive = false;
             await _dbContext.SaveChangesAsync();
         }

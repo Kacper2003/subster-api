@@ -64,11 +64,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Program", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -102,11 +100,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Subscription", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
@@ -117,8 +113,8 @@ namespace Subster.DAL.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -139,11 +135,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.SubscriptionInvoice", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<int>("CycleNumber")
                         .HasColumnType("integer");
@@ -155,8 +149,8 @@ namespace Subster.DAL.Migrations
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("SubscriptionId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -187,7 +181,6 @@ namespace Subster.DAL.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Ssn")
