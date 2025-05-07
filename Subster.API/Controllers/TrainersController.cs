@@ -9,6 +9,9 @@ namespace Subster.API.Controllers;
 
 [ApiController]
 [Route("api/trainers")]
+[Authorize(Roles = "Trainer")]
+[Produces("application/json")]
+[Consumes("application/json")]
 public class TrainersController : ControllerBase
 {
     private readonly ITrainerService _trainerService;
@@ -18,13 +21,13 @@ public class TrainersController : ControllerBase
         _trainerService = trainerService;
     }
 
-    [Authorize]
-    [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<Trainer>), 200)]
-    [ProducesResponseType(401)]
-    public async Task<ActionResult<IEnumerable<Trainer>>> GetAllTrainers()
-    {
-        var trainers = await _trainerService.GetAllTrainersAsync();
-        return Ok(trainers);
-    }
+    // [Authorize]
+    // [HttpGet]
+    // [ProducesResponseType(typeof(IEnumerable<Trainer>), 200)]
+    // [ProducesResponseType(401)]
+    // public async Task<ActionResult<IEnumerable<Trainer>>> GetAllTrainers()
+    // {
+    //     var trainers = await _trainerService.GetAllTrainersAsync();
+    //     return Ok(trainers);
+    // }
 }
