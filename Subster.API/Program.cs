@@ -18,8 +18,9 @@ using Hangfire.PostgreSql;
 using Subster.API.Jobs;
 using Subster.API.Filters;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
-
+using Subster.API.Middleware;
+using Subster.Models;
+using Microsoft.AspNetCore.Mvc;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,7 +61,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddControllers();
+builder.Services
+  .AddControllers()
+  .ConfigureApiBehaviorOptions(opts =>
+    opts.InvalidModelStateResponseFactory = ctx =>
+    {
+      // flatten all errors into one string (or adapt to a dict if you like)
+      var messages = ctx.ModelState
+          .SelectMany(kv => kv.Value.Errors)
+          .Select(e => e.ErrorMessage)
+          .Distinct();
+      var combined = string.Join("; ", messages);
+
+      var badRequest = new ApiError {
+        StatusCode = StatusCodes.Status400BadRequest,
+        Message    = combined
+      };
+      return new BadRequestObjectResult(badRequest);
+    });
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -74,6 +92,14 @@ builder.Services
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
 
+builder.Services
+    .AddHttpClient<ITaktikalApiClient, TaktikalApiClient>(client =>
+    {
+        client.BaseAddress = new Uri(builder.Configuration["Taktikal:BaseUrl"]!);
+        client.DefaultRequestHeaders.Accept.Add(
+            new MediaTypeWithQualityHeaderValue("application/json"));
+    });
+
 // Dependency Injection
 builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
@@ -81,9 +107,10 @@ builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IProgramRepository, ProgramRepository>();
 
 builder.Services.AddScoped<IPaydayService, PaydayService>();
+builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
+
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-builder.Services.AddScoped<ITaktikalAuthService, TaktikalAuthService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProgramService, ProgramService>();
 
@@ -178,6 +205,8 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ApiExceptionMiddleware>();
 
 app.MapControllers();
 

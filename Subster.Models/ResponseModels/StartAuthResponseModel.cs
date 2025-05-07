@@ -1,6 +1,6 @@
-namespace Subster.Models.Dtos;
+namespace Subster.Models.ResponseModels;
 
-public class StartAuthResponse
+public class StartAuthResponseModel
 {
     public string AuthRequestId { get; set; } = "";
     public string VerificationCode { get; set; } = "";

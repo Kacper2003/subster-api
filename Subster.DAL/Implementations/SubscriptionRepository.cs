@@ -16,7 +16,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task<int> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
+    public async Task<SubscriptionDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
     {
         var subscription = new Subscription
         {
@@ -33,10 +33,18 @@ public class SubscriptionRepository : ISubscriptionRepository
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
 
-        return subscription.Id;
+        return new SubscriptionDto
+        {
+            Id                  = subscription.Id,
+            ClientName          = subscription.Client.Name,
+            ProgramName         = subscription.Program.Name,
+            StartDate           = subscription.StartDate,
+            EndDate             = subscription.EndDate,
+            DurationInMonths    = subscription.DurationInMonths
+        };
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(int trainerId)
+    public async Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(int trainerId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
@@ -55,7 +63,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         
     }
 
-    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, int subscriptionId)
+    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, Guid subscriptionId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
@@ -80,7 +88,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             }).FirstOrDefaultAsync();
     }
 
-    public async Task CreateSubscriptionInvoiceAsync(int subscriptionId, string invoiceId, int cycleNumber)
+    public async Task CreateSubscriptionInvoiceAsync(Guid subscriptionId, string invoiceId, int cycleNumber)
     {
         await _dbContext.SubscriptionInvoices.AddAsync(new SubscriptionInvoice
         {
@@ -108,13 +116,14 @@ public class SubscriptionRepository : ISubscriptionRepository
             .ToListAsync();
     }
 
-    public async Task DeactivateSubscriptionAsync(int subscriptionId)
+    public async Task DeactivateSubscriptionAsync(Guid subscriptionId)
     {
         var subscription = await _dbContext.Subscriptions
             .FirstOrDefaultAsync(s => s.Id == subscriptionId);
 
         if (subscription != null)
         {
+            if (!subscription.IsActive) throw new InvalidOperationException("Subscription is already inactive.");
             subscription.IsActive = false;
             await _dbContext.SaveChangesAsync();
         }

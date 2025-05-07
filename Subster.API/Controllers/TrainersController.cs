@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Subster.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/trainers")]
 public class TrainersController : ControllerBase
 {
     private readonly ITrainerService _trainerService;
@@ -20,6 +20,8 @@ public class TrainersController : ControllerBase
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<Trainer>), 200)]
+    [ProducesResponseType(401)]
     public async Task<ActionResult<IEnumerable<Trainer>>> GetAllTrainers()
     {
         var trainers = await _trainerService.GetAllTrainersAsync();

@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 using Subster.API.Services.Interfaces;
+using Subster.Models;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
+using Subster.Models.Dtos;
 
 namespace Subster.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/subscriptions")]
 public class SubscriptionsController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
@@ -23,15 +25,47 @@ public class SubscriptionsController : ControllerBase
         _programService = programService;
     }
 
+    [Authorize(Roles = "Trainer")]
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<SubscriptionDto>), 200)]
+    public async Task<IActionResult> GetSubscriptions()
+    {
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
+        {
+            return Unauthorized("SSN not found in token");
+        }
+
+        var subscriptions = await _subscriptionService.GetAllSubscriptionsAsync(trainerSsn);
+        return Ok(subscriptions);
+    }
+
+    [Authorize(Roles = "Trainer")]
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
+    public async Task<IActionResult> GetSubscriptionById(Guid id)
+    {
+        var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
+        if (string.IsNullOrEmpty(trainerSsn))
+        {
+            return Unauthorized("SSN not found in token");
+        }
+
+        var subscription = await _subscriptionService.GetSubscriptionByIdAsync(trainerSsn, id);
+
+        return Ok(subscription);
+    }
+
     [Authorize]
     [HttpPost]
+    [ProducesResponseType(typeof(SubscriptionDetailsDto), 201)]
+    [ProducesResponseType(typeof(ApiError), 400)]
     public async Task<IActionResult> CreateSubscription([FromBody] SubscriptionInputModel inputModel)
     {
-        // Get the user's SSN from the token
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (trainerSsn == null)
+        if (string.IsNullOrEmpty(trainerSsn))
         {
-            return BadRequest("SSN not found in token");
+            return Unauthorized("SSN not found in token");
         }
 
         var program = await _programService.GetProgramByIdAsync(trainerSsn, inputModel.ProgramId);
@@ -66,38 +100,35 @@ public class SubscriptionsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> GetSubscriptions()
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
+    [ProducesResponseType(typeof(ApiError), 400)]
+    public async Task<IActionResult> UpdateSubscription(Guid id, [FromBody] SubscriptionUpdateModel updateModel)
     {
-        // Get the user's SSN from the token
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (trainerSsn == null)
+        if (string.IsNullOrEmpty(trainerSsn))
         {
-            return BadRequest("SSN not found in token");
+            return Unauthorized("SSN not found in token");
         }
 
-        var subscriptions = await _subscriptionService.GetSubscriptionsAsync(trainerSsn);
-        return Ok(subscriptions);
+        var updatedSubscription = await _subscriptionService.UpdateSubscriptionAsync(trainerSsn, id, updateModel);
+        return Ok(updatedSubscription);
     }
 
     [Authorize]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetSubscriptionById(int id)
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ApiError), 409)]
+    public async Task<IActionResult> DeactivateSubscription(Guid id)
     {
-        // Get the user's SSN from the token
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (trainerSsn == null)
+        if (string.IsNullOrEmpty(trainerSsn))
         {
-            return BadRequest("SSN not found in token");
+            return Unauthorized("SSN not found in token");
         }
 
-        var subscription = await _subscriptionService.GetSubscriptionByIdAsync(trainerSsn, id);
-        if (subscription == null)
-        {
-            return NotFound();
-        }
-
-        return Ok(subscription);
+        await _subscriptionService.DeactivateSubscriptionAsync(trainerSsn, id);
+        return NoContent();
     }
 
     // [Authorize]
