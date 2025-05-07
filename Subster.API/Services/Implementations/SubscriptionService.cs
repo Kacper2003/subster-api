@@ -2,6 +2,8 @@ using Subster.DAL.Interfaces;
 using Subster.API.Services.Interfaces;
 using Subster.Models.InputModels;
 using Subster.Models.Dtos;
+using Subster.Models.UpdateModels;
+using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations;
 
@@ -36,40 +38,62 @@ public class SubscriptionService : ISubscriptionService
         }
 
         // Create the subscription
-        var subscriptionId = await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
+        var subscription = await _subscriptionRepository.CreateSubscriptionAsync(inputModel, trainer.Id, clientId);
 
         // Immediately create the invoice
         var paydayInvoiceId = await _paydayService.CreateInvoiceAsync(trainerSsn, clientSsn, program);
 
         // Create the invoice, with the cycle set to 1 (guaranteed to have cycle 1)
-        await _subscriptionRepository.CreateSubscriptionInvoiceAsync(subscriptionId, paydayInvoiceId, 1);
+        await _subscriptionRepository.CreateSubscriptionInvoiceAsync(subscription.Id, paydayInvoiceId, 1);
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsAsync(string ssn)
+    public async Task<SubscriptionDetailsDto> UpdateSubscriptionAsync(string trainerSsn, Guid subscriptionId, SubscriptionUpdateModel updateModel)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");
+
+        var updatedSubscription = await _subscriptionRepository.UpdateSubscriptionAsync(subscriptionId, updateModel, trainer.Id)
+            ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
+
+        return updatedSubscription;
+    }
+
+    public async Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(string trainerSsn)
+    {
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
         if (trainer == null)
         {
             throw new Exception("Trainer not found");
         }
 
-        return await _subscriptionRepository.GetSubscriptionsAsync(trainer.Id);
+        return await _subscriptionRepository.GetAllSubscriptionsAsync(trainer.Id);
     }
 
-    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(string ssn, int subscriptionId)
+    public async Task<SubscriptionDetailsDto> GetSubscriptionByIdAsync(string trainerSsn, Guid subscriptionId)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
-        if (trainer == null)
-        {
-            throw new Exception("Trainer not found");
-        }
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");        
 
-        return await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId);
+        var subscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
+            ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
+
+        return subscription;
     }
 
-    // public async Task<IEnumerable<InvoiceDto>> GetInvoicesBySubscriptionIdAsync(string ssn, int subscriptionId)
+    public async Task DeactivateSubscriptionAsync(string trainerSsn, Guid subscriptionId)
+    {
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");
+
+        var existing = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
+            ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
+
+        await _subscriptionRepository.DeactivateSubscriptionAsync(subscriptionId);
+    }
+
+    // public async Task<IEnumerable<InvoiceDto>> GetInvoicesBySubscriptionIdAsync(string trainerSsn, int subscriptionId)
     // {
-    //     var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
+    //     var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
     //     if (trainer == null)
     //     {
     //         throw new Exception("Trainer not found");
