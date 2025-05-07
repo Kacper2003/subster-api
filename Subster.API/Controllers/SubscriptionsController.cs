@@ -10,6 +10,7 @@ namespace Subster.API.Controllers;
 
 [ApiController]
 [Route("api/subscriptions")]
+[Authorize(Roles = "Trainer")]
 [Produces("application/json")]
 [Consumes("application/json")]
 public class SubscriptionsController : ControllerBase
@@ -27,7 +28,6 @@ public class SubscriptionsController : ControllerBase
         _programService = programService;
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<SubscriptionDto>), 200)]
     public async Task<IActionResult> GetSubscriptions()
@@ -42,7 +42,6 @@ public class SubscriptionsController : ControllerBase
         return Ok(subscriptions);
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
     public async Task<IActionResult> GetSubscriptionById(Guid id)
@@ -58,7 +57,6 @@ public class SubscriptionsController : ControllerBase
         return Ok(subscription);
     }
 
-    [Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(SubscriptionDetailsDto), 201)]
     [ProducesResponseType(typeof(ApiError), 400)]
@@ -101,7 +99,6 @@ public class SubscriptionsController : ControllerBase
         return Created();
     }
 
-    [Authorize]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
     [ProducesResponseType(typeof(ApiError), 400)]
@@ -117,7 +114,6 @@ public class SubscriptionsController : ControllerBase
         return Ok(updatedSubscription);
     }
 
-    [Authorize]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiError), 409)]
@@ -132,24 +128,4 @@ public class SubscriptionsController : ControllerBase
         await _subscriptionService.DeactivateSubscriptionAsync(trainerSsn, id);
         return NoContent();
     }
-
-    // [Authorize]
-    // [HttpGet("{id}/invoices")]
-    // public async Task<IActionResult> GetInvoicesBySubscriptionId(int id)
-    // {
-    //     // Get the user's SSN from the token
-    //     var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-    //     if (trainerSsn == null)
-    //     {
-    //         return BadRequest("SSN not found in token");
-    //     }
-
-    //     var invoices = await _subscriptionService.GetInvoicesBySubscriptionIdAsync(trainerSsn, id);
-    //     if (invoices == null)
-    //     {
-    //         return NotFound();
-    //     }
-
-    //     return Ok(invoices);
-    // }
 }
