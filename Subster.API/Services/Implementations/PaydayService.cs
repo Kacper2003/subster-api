@@ -57,6 +57,8 @@ public class PaydayService : IPaydayService
         var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
                 ?? throw new InvalidOperationException("Trainer not found");
 
+        Console.WriteLine($"Trainer: {trainer.Id}, {trainer.PaydayClientId}, {trainer.PaydayClientSecret}");
+
         var token = await _tokenService
             .GetTokenAsync(trainer.Id, trainer.PaydayClientId!, trainer.PaydayClientSecret!)
             ?? throw new Exception("Failed to acquire Payday token");

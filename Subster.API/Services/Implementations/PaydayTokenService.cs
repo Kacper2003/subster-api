@@ -35,6 +35,9 @@ public class PaydayTokenService : ITokenService
         }
 
         var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
+
+        Console.WriteLine($"Payday token response: {response?.AccessToken}");
+
         if (response?.AccessToken == null)
             return null;
 
