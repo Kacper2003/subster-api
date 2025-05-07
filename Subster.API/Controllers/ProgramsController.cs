@@ -9,6 +9,7 @@ using Subster.Models;
 namespace Subster.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Trainer")]
 [Route("api/programs")]
 [Produces("application/json")]
 [Consumes("application/json")]
@@ -21,7 +22,6 @@ public class ProgramsController : ControllerBase
         _programService = programService;
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ProgramDto>), 200)]
     public async Task<IActionResult> GetPrograms()
@@ -36,7 +36,6 @@ public class ProgramsController : ControllerBase
         return Ok(programs);
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProgramDto), 200)]
     public async Task<IActionResult> GetProgramById(Guid id)
@@ -53,7 +52,6 @@ public class ProgramsController : ControllerBase
     }
 
 
-    [Authorize(Roles = "Trainer")]
     [HttpPost]
     [ProducesResponseType(typeof(ProgramDto), 201)]
     [ProducesResponseType(typeof(ApiError), 400)]
@@ -68,7 +66,6 @@ public class ProgramsController : ControllerBase
         return CreatedAtAction(nameof(GetProgramById), new { id = program.Id }, program);
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProgramDto), 200)]
     [ProducesResponseType(typeof(ApiError), 400)]
@@ -84,7 +81,6 @@ public class ProgramsController : ControllerBase
         return Ok(updatedProgram);
     }
 
-    [Authorize(Roles = "Trainer")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiError), 409)]
