@@ -2,7 +2,7 @@ namespace Subster.DAL.Entities;
 
 public class Trainer
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = null!;
     public string Ssn { get; set; } = null!;
     public string? PhoneNumber { get; set; }

@@ -8,6 +8,7 @@ using Subster.DAL.Entities;
 using Subster.DAL.Utilities;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
 
 namespace Subster.DAL.Implementations
 {
@@ -49,10 +50,10 @@ namespace Subster.DAL.Implementations
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<TrainerDto?> GetTrainerByIdAsync(int id)
+        public async Task<TrainerDto?> GetTrainerByIdAsync(Guid trainerId)
         {
             return await _dbContext.Trainers
-                .Where(u => u.Id == id)
+                .Where(u => u.Id == trainerId)
                 .Select(u => new TrainerDto
                 {
                     Id = u.Id,
@@ -61,6 +62,68 @@ namespace Subster.DAL.Implementations
                     PhoneNumber = u.PhoneNumber
                 })
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<TrainerDetailsDto?> GetTrainerDetailsByIdAsync(Guid trainerId)
+        {
+            var trainer = await _dbContext.Trainers
+                .Where(u => u.Id == trainerId)
+                .Select(u => new TrainerDetailsDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Ssn = u.Ssn,
+                    PhoneNumber = u.PhoneNumber,
+                    Programs = u.Programs.Select(p => new ProgramDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        UnitPriceExcludingVat = p.UnitPriceExcludingVat,
+                        UnitPriceIncludingVat = p.UnitPriceIncludingVat,
+                        VatPercentage = p.VatPercentage,
+                        IsActive = p.IsActive
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            return trainer;
+        }
+
+        public async Task<TrainerDetailsDto?> UpdateTrainerDetailsAsync(Guid trainerId, TrainerUpdateModel updateModel)
+        {
+            var trainer = await _dbContext.Trainers
+                .Include(u => u.Programs)
+                .FirstOrDefaultAsync(u => u.Id == trainerId);
+
+            if (trainer == null)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(updateModel.Name))
+                trainer.Name = updateModel.Name;
+
+            if (!string.IsNullOrWhiteSpace(updateModel.PhoneNumber))
+                trainer.PhoneNumber = updateModel.PhoneNumber;
+
+            await _dbContext.SaveChangesAsync();
+
+            return new TrainerDetailsDto
+            {
+                Id = trainer.Id,
+                Name = trainer.Name,
+                Ssn = trainer.Ssn,
+                PhoneNumber = trainer.PhoneNumber,
+                Programs = trainer.Programs.Select(p => new ProgramDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    UnitPriceExcludingVat = p.UnitPriceExcludingVat,
+                    UnitPriceIncludingVat = p.UnitPriceIncludingVat,
+                    VatPercentage = p.VatPercentage,
+                    IsActive = p.IsActive
+                }).ToList()
+            };
         }
 
         public async Task<bool> ExistsBySsnAsync(string ssn)
@@ -88,10 +151,10 @@ namespace Subster.DAL.Implementations
             return trainer;
         }
 
-        public async Task<Trainer?> FindTrainerEntityByIdAsync(int id)
+        public async Task<Trainer?> FindTrainerEntityByIdAsync(Guid trainerId)
         {
             var trainer = await _dbContext.Trainers
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .FirstOrDefaultAsync(u => u.Id == trainerId);
 
             if (trainer != null)
             {
@@ -132,7 +195,7 @@ namespace Subster.DAL.Implementations
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task UpdatePaydayCredentialsAsync(int trainerId, string? clientId, string? clientSecret)
+        public async Task UpdatePaydayCredentialsAsync(Guid trainerId, string? clientId, string? clientSecret)
         {
             var trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Id == trainerId);
@@ -151,7 +214,7 @@ namespace Subster.DAL.Implementations
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task DeleteTrainerAsync(int trainerId)
+        public async Task DeleteTrainerAsync(Guid trainerId)
         {
             var trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Id == trainerId);

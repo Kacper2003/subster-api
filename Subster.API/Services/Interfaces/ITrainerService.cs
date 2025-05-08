@@ -1,41 +1,21 @@
 using Subster.DAL.Entities;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
 
 namespace Subster.API.Services.Interfaces;
 
 public interface ITrainerService
 {
-    /// <summary>
-    /// Retrieves all trainers' public DTOs.
-    /// </summary>
     Task<IEnumerable<TrainerDto>> GetAllTrainersAsync();
 
-    /// <summary>
-    /// Retrieves a public DTO for a trainer by internal ID.
-    /// </summary>
-    Task<TrainerDto?> GetTrainerByIdAsync(int id);
-
-    /// <summary>
-    /// Checks whether a trainer with the given SSN exists.
-    /// </summary>
+    Task<TrainerDto?> GetTrainerByIdAsync(Guid trainerId);
+    Task<TrainerDetailsDto> GetTrainerDetailsBySsnAsync(string trainerSsn);
+    Task<TrainerDetailsDto> UpdateTrainerDetailsAsync(string trainerSsn, TrainerUpdateModel trainerDetailsDto);
     Task<bool> ExistsBySsnAsync(string ssn);
-
-    /// <summary>
-    /// Creates a trainer if none exists with the same SSN.
-    /// Returns true if created, false otherwise.
-    /// </summary>
     Task<bool> CreateTrainerIfNotExistsAsync(UserInputModel inputModel);
-
-    /// <summary>
-    /// Retrieves the full Trainer entity (including decrypted credentials) by SSN.
-    /// </summary>
     Task<Trainer?> GetTrainerEntityBySsnAsync(string ssn);
-
-    /// <summary>
-    /// Updates the trainer's Payday credentials.
-    /// Returns false if trainer not found.
-    /// </summary>
+    Task<bool> HasPaydayCredentialsAsync(string ssn);
     Task<bool> UpdatePaydayCredentialsAsync(string ssn, string clientId, string clientSecret);
 
     /// <summary>
