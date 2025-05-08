@@ -36,9 +36,9 @@ public class PaydayTokenService : ITokenService
         }
 
         var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
-
-        if (response?.AccessToken == null)
-            throw new UnauthorizedException("Invalid client ID and/or client secret.");
+        
+        if (response == null)
+            throw new UnauthorizedException("Failed to authenticate with Payday API.");
 
         var expiresIn = TimeSpan.FromSeconds(response.ExpiresIn);
         _cache.Set(cacheKey,
@@ -46,5 +46,11 @@ public class PaydayTokenService : ITokenService
                     expiresIn);
 
         return response.AccessToken;
+    }
+
+    public async Task<bool> ValidateCredentialsAsync(string clientId, string clientSecret)
+    {
+        var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
+        return response != null;
     }
 }

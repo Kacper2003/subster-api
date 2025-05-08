@@ -27,7 +27,10 @@ public class PaydayService : IPaydayService
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
 
-        await _tokenService.GetTokenAsync(trainer.Id, clientId, clientSecret);
+        var validCredentials = await _tokenService.ValidateCredentialsAsync(clientId, clientSecret);
+
+        if (!validCredentials)
+            throw new UnauthorizedException("Invalid client credentials.");
 
         await _trainerRepository
             .UpdatePaydayCredentialsAsync(trainer.Id, clientId, clientSecret);
