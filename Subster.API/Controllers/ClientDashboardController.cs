@@ -54,12 +54,6 @@ public class ClientDashboardController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<TrainerDto>), 200)]
     public async Task<IActionResult> GetTrainers()
     {
-        var clientSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
-        if (string.IsNullOrEmpty(clientSsn))
-        {
-            return Unauthorized("SSN not found in token");
-        }
-
         var trainers = await _clientDashboardService.GetAllTrainersAsync();
         return Ok(trainers);
     }
