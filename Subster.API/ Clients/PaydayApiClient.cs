@@ -39,7 +39,6 @@ public class PaydayApiClient : IPaydayApiClient
             new AuthenticationHeaderValue("Bearer", accessToken);
 
         var resp = await _http.PostAsJsonAsync(InvoicesUri, input);
-        Console.WriteLine($"Response: {await resp.Content.ReadAsStringAsync()}");
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadFromJsonAsync<PaydayInvoice>();
     }

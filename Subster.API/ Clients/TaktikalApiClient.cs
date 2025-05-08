@@ -15,7 +15,6 @@ public class TaktikalApiClient : ITaktikalApiClient
     {
         var resp = await _http.PostAsJsonAsync(StartPath, dto);
         if (!resp.IsSuccessStatusCode) return null;
-        Console.WriteLine(await resp.Content.ReadAsStringAsync());
         return await resp.Content.ReadFromJsonAsync<StartAuthResponseModel>();
     }
 

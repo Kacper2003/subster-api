@@ -44,6 +44,7 @@ public class PaydayService : IPaydayService
         if (trainer.PaydayClientId == null || trainer.PaydayClientSecret == null)
             throw new InvalidOperationException("Trainer does not have valid credentials.");
             
+        _tokenService.RemoveToken(trainer.Id);
         await _trainerRepository
             .UpdatePaydayCredentialsAsync(trainer.Id, null, null);
     }

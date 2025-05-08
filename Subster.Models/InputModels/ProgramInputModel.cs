@@ -10,6 +10,6 @@ public class ProgramInputModel
     public string Description { get; set; } = null!;
     public decimal? UnitPriceExcludingVat { get; set; }
     public decimal? UnitPriceIncludingVat { get; set; }
-    public decimal VatPercentage { get; set; } = 24;
+    public decimal VatPercentage { get; set; } = 0;
     public bool IsActive { get; set; } = true;
 }
