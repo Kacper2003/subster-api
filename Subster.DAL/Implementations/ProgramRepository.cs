@@ -17,7 +17,7 @@ public class ProgramRepository : IProgramRepository
         _dbContext = dbContext;
     }
 
-    public async Task<ProgramDto> CreateProgramAsync(ProgramInputModel inputModel, int trainerId)
+    public async Task<ProgramDto> CreateProgramAsync(ProgramInputModel inputModel, Guid trainerId)
     {
         // Validate the vat
         if (inputModel.VatPercentage < 0 || inputModel.VatPercentage > 100)
@@ -80,7 +80,7 @@ public class ProgramRepository : IProgramRepository
     }
 
 
-    public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(int trainerId)
+    public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(Guid trainerId)
     {
         // only active programs
         var programs = await _dbContext.Programs
@@ -99,7 +99,7 @@ public class ProgramRepository : IProgramRepository
         return programs;
     }
 
-    public async Task<ProgramDto?> GetProgramByIdAsync(int trainerId, Guid programId)
+    public async Task<ProgramDto?> GetProgramByIdAsync(Guid trainerId, Guid programId)
     {
         var program = await _dbContext.Programs
             .Where(p => p.TrainerId == trainerId && p.Id == programId && p.IsActive)
@@ -117,7 +117,7 @@ public class ProgramRepository : IProgramRepository
         return program;
     }
 
-    public async Task<ProgramDto?> UpdateProgramAsync(Guid programId, ProgramUpdateModel updateModel, int trainerId)
+    public async Task<ProgramDto?> UpdateProgramAsync(Guid programId, ProgramUpdateModel updateModel, Guid trainerId)
     {
         var program = await _dbContext.Programs
             .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);
@@ -173,7 +173,7 @@ public class ProgramRepository : IProgramRepository
         };
     }
     
-    public async Task DeactivateProgramAsync(int trainerId, Guid programId)
+    public async Task DeactivateProgramAsync(Guid trainerId, Guid programId)
     {
         var program = await _dbContext.Programs
             .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);

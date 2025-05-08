@@ -11,7 +11,7 @@ public class Program
     public bool IsActive { get; set; } = true;
 
     // Foreign keys
-    public int TrainerId { get; set; }
+    public Guid TrainerId { get; set; }
     public Trainer Trainer { get; set; } = null!;
     public ICollection<Subscription> Subscriptions { get; set; } = [];
 }

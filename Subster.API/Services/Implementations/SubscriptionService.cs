@@ -22,7 +22,7 @@ public class SubscriptionService : ISubscriptionService
         _programRepository = programRepository;
     }
 
-    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, int clientId, string clientSsn)
+    public async Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, Guid clientId, string clientSsn)
     {
         
         var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);

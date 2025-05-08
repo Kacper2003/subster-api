@@ -16,7 +16,7 @@ public class ClientService : IClientService
 
     public async Task<IEnumerable<ClientDto>> GetAllClientsAsync() => await _clientRepository.GetAllClientsAsync();
 
-    public async Task<int> CreateClientIfNotExistsAsync(UserInputModel inputModel)
+    public async Task<Guid> CreateClientIfNotExistsAsync(UserInputModel inputModel)
     {
         var client = await _clientRepository.GetClientBySsnAsync(inputModel.Ssn);
         if (client == null)

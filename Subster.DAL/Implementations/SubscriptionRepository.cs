@@ -17,7 +17,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         _dbContext = dbContext;
     }
 
-    public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, int trainerId, int clientId)
+    public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, Guid trainerId, Guid clientId)
     {
         var subscription = new Subscription
         {
@@ -58,15 +58,17 @@ public class SubscriptionRepository : ISubscriptionRepository
         };
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(int trainerId)
+    public async Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(Guid trainerId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
             .Include(s => s.Program)
+            .Include(s => s.Trainer)
             .Where(s => s.TrainerId == trainerId)
             .Select(s => new SubscriptionDto
             {
                 Id                  = s.Id,
+                TrainerName         = s.Trainer.Name,
                 ClientName          = s.Client.Name,
                 ProgramName         = s.Program.Name,
                 StartDate           = s.StartDate,
@@ -77,15 +79,17 @@ public class SubscriptionRepository : ISubscriptionRepository
         
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsByClientIdAsync(int clientId)
+    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsByClientIdAsync(Guid clientId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
             .Include(s => s.Program)
+            .Include(s => s.Trainer)
             .Where(s => s.ClientId == clientId && s.IsActive)
             .Select(s => new SubscriptionDto
             {
                 Id                  = s.Id,
+                TrainerName         = s.Trainer.Name,
                 ClientName          = s.Client.Name,
                 ProgramName         = s.Program.Name,
                 StartDate           = s.StartDate,
@@ -95,7 +99,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             .ToListAsync();
     }
 
-    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(int trainerId, Guid subscriptionId)
+    public async Task<SubscriptionDetailsDto?> GetSubscriptionByIdAsync(Guid trainerId, Guid subscriptionId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
@@ -120,7 +124,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<SubscriptionDetailsDto?> GetClientSubscriptionByIdAsync(int clientId, Guid subscriptionId)
+    public async Task<SubscriptionDetailsDto?> GetClientSubscriptionByIdAsync(Guid clientId, Guid subscriptionId)
     {
         return await _dbContext.Subscriptions
             .Include(s => s.Client)
@@ -173,7 +177,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             .ToListAsync();
     }
 
-    public async Task<SubscriptionDetailsDto?> UpdateSubscriptionAsync(Guid subscriptionId, SubscriptionUpdateModel updateModel, int trainerId)
+    public async Task<SubscriptionDetailsDto?> UpdateSubscriptionAsync(Guid subscriptionId, SubscriptionUpdateModel updateModel, Guid trainerId)
     {
         var subscription = await _dbContext.Subscriptions
             .Include(s => s.Program)

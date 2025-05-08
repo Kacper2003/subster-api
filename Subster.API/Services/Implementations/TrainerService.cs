@@ -3,6 +3,8 @@ using Subster.DAL.Interfaces;
 using Subster.DAL.Entities;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
+using Subster.Models.UpdateModels;
+using Subster.API.Exceptions; 
 
 namespace Subster.API.Services.Implementations
 {
@@ -25,14 +27,36 @@ namespace Subster.API.Services.Implementations
         /// Retrieves a trainer by their internal ID.
         /// Returns null if not found.
         /// </summary>
-        public Task<TrainerDto?> GetTrainerByIdAsync(int id)
-            => _trainerRepository.GetTrainerByIdAsync(id);
+        public Task<TrainerDto?> GetTrainerByIdAsync(Guid trainerId)
+            => _trainerRepository.GetTrainerByIdAsync(trainerId);
+
+        public async Task<TrainerDetailsDto> GetTrainerDetailsBySsnAsync(string trainerSsn)
+        {
+            var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+                ?? throw new UnauthorizedException("Invalid trainer credentials.");
+
+            var trainerDetails = await _trainerRepository.GetTrainerDetailsByIdAsync(trainer.Id)
+                ?? throw new NotFoundException("Trainer not found.");
+
+            return trainerDetails;
+        }
+
+        public async Task<TrainerDetailsDto> UpdateTrainerDetailsAsync(string trainerSsn, TrainerUpdateModel updateModel)
+        {
+            var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+                ?? throw new UnauthorizedException("Invalid trainer credentials.");
+
+            var updatedTrainer = await _trainerRepository.UpdateTrainerDetailsAsync(trainer.Id, updateModel)
+                ?? throw new NotFoundException("Trainer not found.");
+
+            return updatedTrainer;
+        }
 
         /// <summary>
         /// Checks whether a trainer with the given SSN already exists.
         /// </summary>
-        public Task<bool> ExistsBySsnAsync(string ssn)
-            => _trainerRepository.ExistsBySsnAsync(ssn);
+        public Task<bool> ExistsBySsnAsync(string trainerSsn)
+            => _trainerRepository.ExistsBySsnAsync(trainerSsn);
 
         /// <summary>
         /// Creates a trainer if none exists with the same SSN.
@@ -51,16 +75,20 @@ namespace Subster.API.Services.Implementations
         /// <summary>
         /// Retrieves the full Trainer entity (including decrypted Payday credentials).
         /// </summary>
-        public Task<Trainer?> GetTrainerEntityBySsnAsync(string ssn)
-            => _trainerRepository.FindTrainerEntityBySsnAsync(ssn);
+        public Task<Trainer?> GetTrainerEntityBySsnAsync(string trainerSsn)
+            => _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
 
-        /// <summary>
-        /// Updates the trainer's Payday client ID and secret.
-        /// Returns false if the trainer is not found.
-        /// </summary>
-        public async Task<bool> UpdatePaydayCredentialsAsync(string ssn, string clientId, string clientSecret)
+        public async Task<bool> HasPaydayCredentialsAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(ssn);
+            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+                ?? throw new UnauthorizedException("Invalid trainer credentials.");
+
+            return !string.IsNullOrEmpty(trainer.PaydayClientId) && !string.IsNullOrEmpty(trainer.PaydayClientSecret);
+        }
+
+        public async Task<bool> UpdatePaydayCredentialsAsync(string trainerSsn, string clientId, string clientSecret)
+        {
+            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 
@@ -73,9 +101,9 @@ namespace Subster.API.Services.Implementations
         /// Deletes the trainer's Payday credentials.
         /// Returns false if the trainer is not found.
         /// </summary>
-        public async Task<bool> DeletePaydayCredentialsAsync(string ssn)
+        public async Task<bool> DeletePaydayCredentialsAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(ssn);
+            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 
@@ -88,9 +116,9 @@ namespace Subster.API.Services.Implementations
         /// Deletes (or soft-deletes) the trainer record.
         /// Returns false if the trainer is not found.
         /// </summary>
-        public async Task<bool> DeleteTrainerAsync(string ssn)
+        public async Task<bool> DeleteTrainerAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(ssn);
+            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 
