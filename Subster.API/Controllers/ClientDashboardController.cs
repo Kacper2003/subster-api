@@ -7,7 +7,6 @@ using Subster.Models;
 namespace Subster.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Client")]
 [Route("api/client")]
 [Produces("application/json")]
 [Consumes("application/json")]
@@ -21,6 +20,7 @@ public class ClientDashboardController : ControllerBase
     }
 
     [HttpGet("subscriptions")]
+    [Authorize(Roles = "Client")]
     [ProducesResponseType(typeof(IEnumerable<SubscriptionDto>), 200)]
     public async Task<IActionResult> GetSubscriptions()
     {
@@ -35,6 +35,7 @@ public class ClientDashboardController : ControllerBase
     }
     
     [HttpDelete("subscriptions/{id:guid}")]
+    [Authorize(Roles = "Client")]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiError), 409)]
     public async Task<IActionResult> DeactivateSubscription(Guid id)

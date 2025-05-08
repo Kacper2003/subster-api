@@ -7,12 +7,12 @@ public interface IPaydayService
     /// <summary>
     /// Stores and validates the trainer’s Payday credentials.
     /// </summary>
-    Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret);
+    Task UpdateCredentials(string ssn, string clientId, string clientSecret);
 
     /// <summary>
     /// Removes the trainer’s stored Payday credentials.
     /// </summary>
-    Task<bool> DeleteCredentials(string ssn);
+    Task DeleteCredentials(string ssn);
 
     /// <summary>
     /// Creates (or finds) a customer and then issues an invoice, returning its ID.

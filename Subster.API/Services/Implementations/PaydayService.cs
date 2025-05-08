@@ -4,6 +4,7 @@ using Subster.DAL.Interfaces;
 using Subster.Models.Dtos.Payday;
 using Subster.Models.Dtos;
 using Subster.Models.InputModels;
+using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations;
 
@@ -20,44 +21,34 @@ public class PaydayService : IPaydayService
         _trainerRepository = trainerRepository;
     }
 
-    public async Task<bool> UpdateCredentials(string ssn, string clientId, string clientSecret)
+    public async Task UpdateCredentials(string trainerSsn, string clientId, string clientSecret)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
-        if (trainer == null) 
-            return false;
+        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-        var token = await _tokenService
-            .GetTokenAsync(trainer.Id, clientId, clientSecret);
 
-        if (token == null) 
-            return false;
+        await _tokenService.GetTokenAsync(trainer.Id, clientId, clientSecret);
 
         await _trainerRepository
             .UpdatePaydayCredentialsAsync(trainer.Id, clientId, clientSecret);
-
-        return true;
     }
 
-    public async Task<bool> DeleteCredentials(string ssn)
+    public async Task DeleteCredentials(string trainerSsn)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(ssn);
-        if (trainer == null) 
-            return false;
+        var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
+        if (trainer.PaydayClientId == null || trainer.PaydayClientSecret == null)
+            throw new InvalidOperationException("Trainer does not have valid credentials.");
+            
         await _trainerRepository
             .UpdatePaydayCredentialsAsync(trainer.Id, null, null);
-
-        // cache eviction handled in TokenService.DeleteTokenAsync (if implemented)
-
-        return true;
     }
 
     public async Task<string> CreateInvoiceAsync(string trainerSsn, string clientSsn, ProgramDto program)
     {
         var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
                 ?? throw new InvalidOperationException("Trainer not found");
-
-        Console.WriteLine($"Trainer: {trainer.Id}, {trainer.PaydayClientId}, {trainer.PaydayClientSecret}");
 
         var token = await _tokenService
             .GetTokenAsync(trainer.Id, trainer.PaydayClientId!, trainer.PaydayClientSecret!)

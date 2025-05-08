@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Subster.API.Clients;
+using Subster.API.Exceptions;
 using Subster.API.Services.Interfaces;
 using Subster.DAL.Utilities;
 
@@ -26,7 +27,7 @@ public class PaydayTokenService : ITokenService
         _encryptionHelper  = encryptionHelper;
     }
 
-    public async Task<string?> GetTokenAsync(int trainerId, string clientId, string clientSecret)
+    public async Task<string> GetTokenAsync(Guid trainerId, string clientId, string clientSecret)
     {
         var cacheKey = CacheKeyPrefix + trainerId;
         if (_cache.TryGetValue(cacheKey, out string protectedToken))
@@ -36,10 +37,8 @@ public class PaydayTokenService : ITokenService
 
         var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
 
-        Console.WriteLine($"Payday token response: {response?.AccessToken}");
-
         if (response?.AccessToken == null)
-            return null;
+            throw new UnauthorizedException("Invalid client ID and/or client secret.");
 
         var expiresIn = TimeSpan.FromSeconds(response.ExpiresIn);
         _cache.Set(cacheKey,
