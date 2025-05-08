@@ -27,8 +27,12 @@ services:
     container_name: subster-api
     env_file:
       - .env
+    environment:
+      # Kestrel listens on 0.0.0.0:${PORT}
+      - ASPNETCORE_URLS=http://0.0.0.0:${PORT}
     ports:
-      - "5001:8080"
+      # Expose container port ${PORT} on host port ${PORT}
+      - "${PORT}:${PORT}"
     depends_on:
       postgres-db:
         condition: service_healthy

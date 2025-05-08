@@ -22,15 +22,18 @@ using Subster.API.Middleware;
 using Subster.Models;
 using Microsoft.AspNetCore.Mvc;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Load environment variables
 Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
+// Bind to Render's PORT on all interfaces
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]) ?? throw new Exception("Secret key not found");
-
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -61,12 +64,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+// Health checks for Render
+builder.Services.AddHealthChecks();
 builder.Services
   .AddControllers()
   .ConfigureApiBehaviorOptions(opts =>
     opts.InvalidModelStateResponseFactory = ctx =>
     {
-      // flatten all errors into one string (or adapt to a dict if you like)
       var messages = ctx.ModelState
           .SelectMany(kv => kv.Value.Errors)
           .Select(e => e.ErrorMessage)
@@ -80,10 +84,19 @@ builder.Services
       return new BadRequestObjectResult(badRequest);
     });
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Subster API",
+        Version = "v1",
+        Description = "API for personal trainers and their clients"
+    });
+});
 
+// HTTP clients
 builder.Services
     .AddHttpClient<IPaydayApiClient, PaydayApiClient>(client =>
     {
@@ -100,7 +113,7 @@ builder.Services
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
 
-// Dependency Injection
+// DI: repositories & services
 builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();  
@@ -122,21 +135,16 @@ builder.Services.AddTransient<EncryptionHelper>();
 
 builder.Services.AddMemoryCache();
 
-builder.Services.AddHttpClient();
-
+// Database
 var connString = builder.Configuration.GetConnectionString("SubsterDb")!;
-
-// SubsterDbContext
 builder.Services.AddDbContext<SubsterDbContext>(options =>
-    options.UseNpgsql(
-        connString
-    )
+    options.UseNpgsql(connString)
 );
 
 // Data Protection
 builder.Services
     .AddDataProtection()
-    .SetApplicationName("Subster")  // use a stable name across instances
+    .SetApplicationName("Subster")
     .PersistKeysToDbContext<SubsterDbContext>();
 
 // Hangfire
@@ -153,17 +161,6 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Subster API",
-        Version = "v1",
-        Description = "API for personal trainers and their clients"
-    });
-});
-
 var app = builder.Build();
 
 app.UseHttpsRedirection();
@@ -173,12 +170,13 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowCredentials());
 
-
-
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [new AllowAllDashboardAuthorizationFilter()],
 });
+
+// Health check on root for Render
+app.MapHealthChecks("/");
 
 RecurringJob.AddOrUpdate<SubscriptionBillingJob>(
     "subscription-billing-job",
@@ -190,7 +188,7 @@ RecurringJob.AddOrUpdate<SubscriptionBillingJob>(
     }
 );
 
-// Þessi kóði keyrir migrations í hvert skipti sem bakendinn er keyrður
+// Run migrations each start
 using (var scoper = app.Services.CreateScope())
 {
     var dbContext = scoper.ServiceProvider.GetRequiredService<SubsterDbContext>();
@@ -199,8 +197,8 @@ using (var scoper = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();         // Generates JSON
-    app.UseSwaggerUI();       // Enables the UI (at /swagger)
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseRouting();
