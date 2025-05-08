@@ -42,7 +42,7 @@ public class ClientRepository : IClientRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<int> CreateClientAsync(UserInputModel inputModel)
+    public async Task<Guid> CreateClientAsync(UserInputModel inputModel)
     {
         // Check if client already exists
         var existingClient = _dbContext.Clients

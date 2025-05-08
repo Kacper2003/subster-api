@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Subster.DAL.Migrations
 {
     /// <inheritdoc />
-    public partial class Creation : Migration
+    public partial class MoreGuid : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,8 +16,7 @@ namespace Subster.DAL.Migrations
                 name: "Clients",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Ssn = table.Column<string>(type: "text", nullable: false)
                 },
@@ -44,8 +43,7 @@ namespace Subster.DAL.Migrations
                 name: "Trainers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Ssn = table.Column<string>(type: "text", nullable: false),
                     PhoneNumber = table.Column<string>(type: "text", nullable: true),
@@ -69,7 +67,7 @@ namespace Subster.DAL.Migrations
                     UnitPriceIncludingVat = table.Column<decimal>(type: "numeric", nullable: false),
                     VatPercentage = table.Column<decimal>(type: "numeric", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    TrainerId = table.Column<int>(type: "integer", nullable: false)
+                    TrainerId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -90,8 +88,8 @@ namespace Subster.DAL.Migrations
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DurationInMonths = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    TrainerId = table.Column<int>(type: "integer", nullable: false),
-                    ClientId = table.Column<int>(type: "integer", nullable: false),
+                    TrainerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProgramId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>

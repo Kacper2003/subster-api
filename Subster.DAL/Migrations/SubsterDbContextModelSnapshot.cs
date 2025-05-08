@@ -43,11 +43,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Client", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -79,8 +77,8 @@ namespace Subster.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TrainerId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("UnitPriceExcludingVat")
                         .HasColumnType("numeric");
@@ -104,8 +102,8 @@ namespace Subster.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("ClientId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("DurationInMonths")
                         .HasColumnType("integer");
@@ -119,8 +117,8 @@ namespace Subster.DAL.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TrainerId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -161,11 +159,9 @@ namespace Subster.DAL.Migrations
 
             modelBuilder.Entity("Subster.DAL.Entities.Trainer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");

@@ -9,10 +9,10 @@ public class Subscription
     public bool IsActive { get; set; } = true;
 
     // Foreign keys
-    public int TrainerId { get; set; }
+    public Guid TrainerId { get; set; }
     public Trainer Trainer { get; set; } = null!;
 
-    public int ClientId { get; set; }
+    public Guid ClientId { get; set; }
     public Client Client { get; set; } = null!;
 
     public Guid ProgramId { get; set; }
