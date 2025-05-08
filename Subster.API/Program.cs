@@ -21,8 +21,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Subster.API.Middleware;
 using Subster.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
 
