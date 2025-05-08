@@ -21,6 +21,7 @@ public class ApiExceptionMiddleware
             NotFoundException _    => 404,
             ValidationException _  => 400,
             ArgumentException _    => 400,
+            UnauthorizedException _ => 401,
             InvalidOperationException _=> 409,
             _                      => 500
         };
