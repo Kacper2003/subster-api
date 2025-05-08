@@ -53,4 +53,10 @@ public class PaydayTokenService : ITokenService
         var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
         return response != null;
     }
+
+    public void RemoveToken(Guid trainerId)
+    {
+        var cacheKey = CacheKeyPrefix + trainerId;
+        _cache.Remove(cacheKey);
+    }
 }
