@@ -97,7 +97,7 @@ public class TrainersController : ControllerBase
         }
 
         await _paydayService.DeleteCredentials(ssn);
-        return Ok();
+        return NoContent();
     }
 
 }
