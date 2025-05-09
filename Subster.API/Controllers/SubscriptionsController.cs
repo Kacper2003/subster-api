@@ -5,6 +5,7 @@ using Subster.Models;
 using Subster.Models.InputModels;
 using Subster.Models.UpdateModels;
 using Subster.Models.Dtos;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Subster.API.Controllers;
 
@@ -13,6 +14,7 @@ namespace Subster.API.Controllers;
 [Authorize(Roles = "Trainer")]
 [Produces("application/json")]
 [Consumes("application/json")]
+[SwaggerTag("Áskriftir")]
 public class SubscriptionsController : ControllerBase
 {
     private readonly ITaktikalAuthService _taktikalAuthService;
@@ -20,7 +22,11 @@ public class SubscriptionsController : ControllerBase
     private readonly IClientService _clientService;
     private readonly IProgramService _programService;
 
-    public SubscriptionsController(ITaktikalAuthService taktikalAuthService, ISubscriptionService subscriptionService, IClientService clientService, IProgramService programService)
+    public SubscriptionsController(
+        ITaktikalAuthService taktikalAuthService,
+        ISubscriptionService subscriptionService,
+        IClientService clientService,
+        IProgramService programService)
     {
         _taktikalAuthService = taktikalAuthService;
         _subscriptionService = subscriptionService;
@@ -29,7 +35,11 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<SubscriptionDto>), 200)]
+    [SwaggerOperation(
+        Summary     = "Sækja allar áskriftir",
+        Description = "Skilar lista af öllum áskriftum sem tengjast innskráðum þjálfara."
+    )]
+    [SwaggerResponse(200, "Listi af SubscriptionDto hlutum", typeof(IEnumerable<SubscriptionDto>))]
     public async Task<IActionResult> GetSubscriptions()
     {
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -43,7 +53,11 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
+    [SwaggerOperation(
+        Summary     = "Sækja áskrift eftir auðkenni",
+        Description = "Skilar upplýsingum um eina áskrift með gefnu ID."
+    )]
+    [SwaggerResponse(200, "SubscriptionDetailsDto hlutur", typeof(SubscriptionDetailsDto))]
     public async Task<IActionResult> GetSubscriptionById(Guid id)
     {
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -53,13 +67,16 @@ public class SubscriptionsController : ControllerBase
         }
 
         var subscription = await _subscriptionService.GetSubscriptionByIdAsync(trainerSsn, id);
-
         return Ok(subscription);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(SubscriptionDetailsDto), 201)]
-    [ProducesResponseType(typeof(ApiError), 400)]
+    [SwaggerOperation(
+        Summary     = "Búa til nýja áskrift",
+        Description = "Býr til nýja áskrift fyrir innskráðan þjálfara."
+    )]
+    [SwaggerResponse(201, "Nýr SubscriptionDetailsDto hlutur", typeof(SubscriptionDetailsDto))]
+    [SwaggerResponse(400, "Gildisvilla í innslagi", typeof(ApiError))]
     public async Task<IActionResult> CreateSubscription([FromBody] SubscriptionInputModel inputModel)
     {
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -73,12 +90,11 @@ public class SubscriptionsController : ControllerBase
         {
             return NotFound("Program not found");
         }
-        
-        // Get confirmation (authentication) from client
+
         var clientAuthResult = await _taktikalAuthService.AuthenticateAsync(new AuthInputModel
         {
             PhoneNumber = inputModel.ClientPhoneNumber,
-            Ssn = inputModel.ClientSsn
+            Ssn         = inputModel.ClientSsn
         });
 
         if (!clientAuthResult.Authenticated)
@@ -86,22 +102,25 @@ public class SubscriptionsController : ControllerBase
             return BadRequest(clientAuthResult);
         }
 
-        // Create client if it doesn't exist
         var clientId = await _clientService.CreateClientIfNotExistsAsync(new UserInputModel
         {
             Name = clientAuthResult.Customer.Name,
-            Ssn = clientAuthResult.Customer.Ssn
+            Ssn  = clientAuthResult.Customer.Ssn
         });
 
-        // Finally, create the subscription
-        await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn, clientId, clientAuthResult.Customer.Ssn);
+        await _subscriptionService.CreateSubscriptionAsync(
+            inputModel, trainerSsn, clientId, clientAuthResult.Customer.Ssn);
 
         return Created();
     }
 
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(SubscriptionDetailsDto), 200)]
-    [ProducesResponseType(typeof(ApiError), 400)]
+    [SwaggerOperation(
+        Summary     = "Uppfæra áskrift",
+        Description = "Uppfærir tiltekna áskrift með nýjum gögnum."
+    )]
+    [SwaggerResponse(200, "Uppfærður SubscriptionDetailsDto hlutur", typeof(SubscriptionDetailsDto))]
+    [SwaggerResponse(400, "Gildisvilla í innslagi", typeof(ApiError))]
     public async Task<IActionResult> UpdateSubscription(Guid id, [FromBody] SubscriptionUpdateModel updateModel)
     {
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -115,8 +134,12 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ApiError), 409)]
+    [SwaggerOperation(
+        Summary     = "Óvirkja áskrift",
+        Description = "Merkir áskrift sem óvirka svo hún birtist ekki lengur. Reikningar hætta að sendast en viðskiptavinur hefur aðgang samkvæmt síðasta greidda reikning."
+    )]
+    [SwaggerResponse(204, "Aðgerð tókst")]
+    [SwaggerResponse(409, "Röng aðgerð (áskrift nú þegar óvirk)", typeof(ApiError))]
     public async Task<IActionResult> DeactivateSubscription(Guid id)
     {
         var trainerSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
