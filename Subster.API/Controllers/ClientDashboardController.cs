@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Subster.API.Services.Interfaces;
 using Subster.Models.Dtos;
 using Subster.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Subster.API.Controllers;
 
@@ -10,6 +11,7 @@ namespace Subster.API.Controllers;
 [Route("api/client")]
 [Produces("application/json")]
 [Consumes("application/json")]
+[SwaggerTag("Viðmót viðskiptavinar")]
 public class ClientDashboardController : ControllerBase
 {
     private readonly IClientDashboardService _clientDashboardService;
@@ -21,7 +23,12 @@ public class ClientDashboardController : ControllerBase
 
     [HttpGet("subscriptions")]
     [Authorize(Roles = "Client")]
-    [ProducesResponseType(typeof(IEnumerable<SubscriptionDto>), 200)]
+    [SwaggerOperation(
+        Summary     = "Sækja áskriftir",
+        Description = "Skilar öllum áskriftum sem tengjast innskráðum viðskiptavini."
+    )]
+    [SwaggerResponse(200, "Listi af SubscriptionDto hlutum", typeof(IEnumerable<SubscriptionDto>))]
+    [SwaggerResponse(401, "Óheimilt – innskráning ekki gild", typeof(ApiError))]
     public async Task<IActionResult> GetSubscriptions()
     {
         var clientSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -36,8 +43,12 @@ public class ClientDashboardController : ControllerBase
     
     [HttpDelete("subscriptions/{id:guid}")]
     [Authorize(Roles = "Client")]
-    [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ApiError), 409)]
+    [SwaggerOperation(
+        Summary     = "Óvirkja áskrift",
+        Description = "Merkir áskrift sem óvirka. Reikningar hætta að sendast en viðskiptavinur hefur aðgang samkvæmt síðasta greidda reikning."
+    )]
+    [SwaggerResponse(204, "Aðgerð tókst")]
+    [SwaggerResponse(409, "Röng aðgerð (áskrift nú þegar óvirk)", typeof(ApiError))]
     public async Task<IActionResult> DeactivateSubscription(Guid id)
     {
         var clientSsn = User.Claims.FirstOrDefault(c => c.Type == "Ssn")?.Value;
@@ -51,7 +62,11 @@ public class ClientDashboardController : ControllerBase
     }
 
     [HttpGet("trainers")]
-    [ProducesResponseType(typeof(IEnumerable<TrainerDto>), 200)]
+    [SwaggerOperation(
+        Summary     = "Sækja alla þjálfara",
+        Description = "Skilar lista af öllum þjálfurum sem viðskiptavinur getur valið."
+    )]
+    [SwaggerResponse(200, "Listi af TrainerDto hlutum", typeof(IEnumerable<TrainerDto>))]
     public async Task<IActionResult> GetTrainers()
     {
         var trainers = await _clientDashboardService.GetAllTrainersAsync();

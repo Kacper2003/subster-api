@@ -94,6 +94,7 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "API for personal trainers and their clients"
     });
+    options.EnableAnnotations();
 });
 
 // HTTP clients
