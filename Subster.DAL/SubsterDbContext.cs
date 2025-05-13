@@ -17,6 +17,21 @@ public class SubsterDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<SubscriptionInvoice> SubscriptionInvoices { get; set; }
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Trainer>()
+            .HasIndex(t => t.Ssn)
+            .IsUnique()
+            .HasDatabaseName("IX_Trainer_Ssn");
+
+        modelBuilder.Entity<Client>()
+            .HasIndex(c => c.Ssn)
+            .IsUnique()
+            .HasDatabaseName("IX_Client_Ssn");
+    }
 }
 
 // dotnet ef migrations add MigrationName --project Subster.DAL --startup-project Subster.API
