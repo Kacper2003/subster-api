@@ -6,7 +6,7 @@ namespace Subster.API.Services.Interfaces;
 
 public interface ISubscriptionService
 {
-    Task CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn, Guid clientId, string clientSsn);
+    Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn);
     Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(string trainerSsn);
     Task<SubscriptionDetailsDto> GetSubscriptionByIdAsync(string trainerSsn, Guid subscriptionId);
     Task<SubscriptionDetailsDto> UpdateSubscriptionAsync(string trainerSsn, Guid subscriptionId, SubscriptionUpdateModel inputModel);
