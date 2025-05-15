@@ -87,7 +87,6 @@ public class ProgramRepositoryTests
         };
 		Models.Dtos.ProgramDto dto = await _repo.CreateProgramAsync(input, Guid.NewGuid());
 
-        // excl must be 100, incl = round(100 * 1.25, 2) = 125.00
         Assert.AreEqual(100m, dto.UnitPriceExcludingVat);
         Assert.AreEqual(125.00m, dto.UnitPriceIncludingVat);
         Assert.AreEqual(input.Name, dto.Name);
@@ -107,7 +106,6 @@ public class ProgramRepositoryTests
         };
 		Models.Dtos.ProgramDto dto = await _repo.CreateProgramAsync(input, Guid.NewGuid());
 
-        // incl = 120, excl = round(120 / 1.2, 2) = 100.00
         Assert.AreEqual(100.00m, dto.UnitPriceExcludingVat);
         Assert.AreEqual(120m,    dto.UnitPriceIncludingVat);
         Assert.AreEqual(input.Name, dto.Name);
