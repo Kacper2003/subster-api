@@ -85,33 +85,10 @@ public class SubscriptionsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var program = await _programService.GetProgramByIdAsync(trainerSsn, inputModel.ProgramId);
-        if (program == null)
-        {
-            return NotFound("Program not found");
-        }
+        // Delegate full creation flow to service
+        var created = await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn);
 
-        var clientAuthResult = await _taktikalAuthService.AuthenticateAsync(new AuthInputModel
-        {
-            PhoneNumber = inputModel.ClientPhoneNumber,
-            Ssn         = inputModel.ClientSsn
-        });
-
-        if (!clientAuthResult.Authenticated)
-        {
-            return BadRequest(clientAuthResult);
-        }
-
-        var clientId = await _clientService.CreateClientIfNotExistsAsync(new UserInputModel
-        {
-            Name = clientAuthResult.Customer.Name,
-            Ssn  = clientAuthResult.Customer.Ssn
-        });
-
-        await _subscriptionService.CreateSubscriptionAsync(
-            inputModel, trainerSsn, clientId, clientAuthResult.Customer.Ssn);
-
-        return Created();
+        return CreatedAtAction(nameof(GetSubscriptionById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:guid}")]
