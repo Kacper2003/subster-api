@@ -5,20 +5,15 @@ using Subster.Models.ResponseModels;
 
 namespace Subster.API.Services.Implementations;
 
-public class TaktikalAuthService : ITaktikalAuthService
+public class TaktikalAuthService(ITaktikalApiClient client, IConfiguration config) : ITaktikalAuthService
 {
-    private readonly ITaktikalApiClient _client;
-    private readonly IConfiguration      _config;
+    private readonly ITaktikalApiClient _client = client;
+    private readonly IConfiguration _config = config;
 
-    public TaktikalAuthService(ITaktikalApiClient client, IConfiguration config)
+    // Method to authenticate a user
+	public async Task<EndAuthResponseModel> AuthenticateAsync(AuthInputModel inputModel)
     {
-        _client = client;
-        _config = config;
-    }
-
-    public async Task<EndAuthResponseModel> AuthenticateAsync(AuthInputModel inputModel)
-    {
-        // 1) Validate input
+        // Needs to have either PhoneNumber or Ssn
         if (string.IsNullOrEmpty(inputModel.PhoneNumber)
          && string.IsNullOrEmpty(inputModel.Ssn))
         {
@@ -30,6 +25,7 @@ public class TaktikalAuthService : ITaktikalAuthService
             };
         }
 
+        // Get the key to be able to call the Taktikal API
         var flowKey = _config["Taktikal:FlowKey"];
         if (string.IsNullOrEmpty(flowKey))
         {
@@ -49,8 +45,9 @@ public class TaktikalAuthService : ITaktikalAuthService
             AuthenticationContextType = 
                !string.IsNullOrEmpty(inputModel.PhoneNumber) ? "Sim" : "App"
         };
-        
-        var start = await _client.StartAsync(startDto);
+
+        // Call the Taktikal API to start the authentication process
+		StartAuthResponseModel? start = await _client.StartAsync(startDto);
         if (start == null)
         {
             return new EndAuthResponseModel
@@ -62,9 +59,10 @@ public class TaktikalAuthService : ITaktikalAuthService
         }
 
         var timeout         = TimeSpan.FromSeconds(180);
-        var expiry          = DateTime.UtcNow + timeout;
+		DateTime expiry          = DateTime.UtcNow + timeout;
         var pollingInterval = TimeSpan.FromSeconds(start.PollingInterval);
 
+        // Poll each (pollingInterval) seconds until the authentication is complete or timeout
         while (DateTime.UtcNow < expiry)
         {
             await Task.Delay(pollingInterval);
@@ -75,7 +73,7 @@ public class TaktikalAuthService : ITaktikalAuthService
                 FlowKey       = flowKey,
                 LookupType    = "Name"
             };
-            var poll = await _client.PollAsync(pollDto);
+			PollResponseModel? poll = await _client.PollAsync(pollDto);
 
             if (poll == null)
             {

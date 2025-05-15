@@ -8,22 +8,15 @@ using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations;
 
-public class PaydayService : IPaydayService
+public class PaydayService(IPaydayApiClient paydayClient, ITokenService tokenService, ITrainerRepository trainerRepository) : IPaydayService
 {
-    private readonly IPaydayApiClient _paydayClient;
-    private readonly ITokenService _tokenService;
-    private readonly ITrainerRepository _trainerRepository;
+    private readonly IPaydayApiClient _paydayClient = paydayClient;
+    private readonly ITokenService _tokenService = tokenService;
+    private readonly ITrainerRepository _trainerRepository = trainerRepository;
 
-    public PaydayService(IPaydayApiClient paydayClient, ITokenService tokenService, ITrainerRepository trainerRepository)
+	public async Task UpdateCredentials(string trainerSsn, string clientId, string clientSecret)
     {
-        _paydayClient     = paydayClient;
-        _tokenService     = tokenService;
-        _trainerRepository = trainerRepository;
-    }
-
-    public async Task UpdateCredentials(string trainerSsn, string clientId, string clientSecret)
-    {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+		TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
 
@@ -38,7 +31,7 @@ public class PaydayService : IPaydayService
 
     public async Task DeleteCredentials(string trainerSsn)
     {
-        var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+		DAL.Entities.Trainer trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
         if (trainer.PaydayClientId == null || trainer.PaydayClientSecret == null)
@@ -51,15 +44,17 @@ public class PaydayService : IPaydayService
 
     public async Task<string> CreateInvoiceAsync(string trainerSsn, string clientSsn, ProgramDto program)
     {
-        var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+        // Ensure the trainer exists
+		DAL.Entities.Trainer trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
                 ?? throw new InvalidOperationException("Trainer not found");
 
+        // Get the token for the trainer
         var token = await _tokenService
             .GetTokenAsync(trainer.Id, trainer.PaydayClientId!, trainer.PaydayClientSecret!)
             ?? throw new Exception("Failed to acquire Payday token");
 
-        // Ensure the customer exists (or is created)
-        var customer = await _paydayClient
+		// Ensure the customer exists (or is created)
+		PaydayCustomer customer = await _paydayClient
             .CreateCustomerAsync(token, new PaydayCustomerInputModel { Ssn = clientSsn })
             ?? throw new Exception("Failed to create or retrieve customer");
 
@@ -69,18 +64,18 @@ public class PaydayService : IPaydayService
             InvoiceDate  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             DueDate      = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"),
             FinalDueDate = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"),
-            Lines        = new[]
-            {
-                new Line
+            Lines        =
+			[
+				new Line
                 {
                     Description           = program.Name,
                     UnitPriceExcludingVat = program.UnitPriceExcludingVat,
                     VatPercentage         = program.VatPercentage
                 }
-            }
+            ]
         };
 
-        var invoice = await _paydayClient
+		PaydayInvoice invoice = await _paydayClient
             .CreateInvoiceAsync(token, invoiceInput)
             ?? throw new Exception("Failed to create invoice");
 

@@ -7,37 +7,25 @@ using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations;
 
-public class SubscriptionService : ISubscriptionService
+public class SubscriptionService(IPaydayService paydayService, ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository, IProgramRepository programRepository, ITaktikalAuthService taktikAuthService, IClientRepository clientRepository) : ISubscriptionService
 {
-    private readonly IPaydayService _paydayService;
-    private readonly ITaktikalAuthService _taktikalAuthService;
-    private readonly IClientRepository _clientRepository;
-    private readonly ITrainerRepository _trainerRepository;
-    private readonly ISubscriptionRepository _subscriptionRepository;
-    private readonly IProgramRepository _programRepository;
+    private readonly IPaydayService _paydayService = paydayService;
+    private readonly ITaktikalAuthService _taktikalAuthService = taktikAuthService;
+    private readonly IClientRepository _clientRepository = clientRepository;
+    private readonly ITrainerRepository _trainerRepository = trainerRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository = subscriptionRepository;
+    private readonly IProgramRepository _programRepository = programRepository;
 
-    public SubscriptionService(IPaydayService paydayService, ITrainerRepository trainerRepository, ISubscriptionRepository subscriptionRepository, IProgramRepository programRepository, ITaktikalAuthService taktikAuthService, IClientRepository clientRepository)
+	public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn)
     {
-        _taktikalAuthService = taktikAuthService;
-        _clientRepository = clientRepository;
-        _paydayService = paydayService;
-        _trainerRepository = trainerRepository;
-        _subscriptionRepository = subscriptionRepository;
-        _programRepository = programRepository;
-    }
-
-    public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, string trainerSsn)
-    {
-        // 1. Validate trainer exists
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+		TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
                       ?? throw new UnauthorizedException("Trainer not found");
 
-        // 2. Validate program exists
-        var program = await _programRepository.GetProgramByIdAsync(trainer.Id, inputModel.ProgramId)
+		ProgramDto program = await _programRepository.GetProgramByIdAsync(trainer.Id, inputModel.ProgramId)
                       ?? throw new NotFoundException("Program not found");
 
-        // 3. Authenticate client via Taktikal
-        var auth = await _taktikalAuthService.AuthenticateAsync(new AuthInputModel
+        // Get client confirmation on the subscription
+		Models.ResponseModels.EndAuthResponseModel auth = await _taktikalAuthService.AuthenticateAsync(new AuthInputModel
         {
             PhoneNumber = inputModel.ClientPhoneNumber,
             Ssn         = inputModel.ClientSsn
@@ -46,28 +34,27 @@ public class SubscriptionService : ISubscriptionService
         if (!auth.Authenticated)
             throw new ValidationException($"Client authentication failed: {auth.Error}");
 
-        // 4. Create or fetch local client
-        var clientId = await _clientRepository.CreateClientAsync(new UserInputModel
+		// Create a Client record, so we can link it to the subscription, and the client can log in and manage their subscription
+		Guid clientId = await _clientRepository.CreateClientAsync(new UserInputModel
         {
             Name = auth.Customer.Name,
             Ssn  = auth.Customer.Ssn
         });
 
-        // 5. Create subscription record
-        var subscription = await _subscriptionRepository.CreateSubscriptionAsync(
+        // 
+		SubscriptionDetailsDto subscription = await _subscriptionRepository.CreateSubscriptionAsync(
             inputModel,
             trainer.Id,
             clientId
         );
 
-        // 6. Issue invoice via Payday
+        // Even if it fails, the cron job will send the invoice a day later
         var invoiceId = await _paydayService.CreateInvoiceAsync(
             trainerSsn,
             auth.Customer.Ssn,
             program
         );
 
-        // 7. Link invoice to subscription
         await _subscriptionRepository.CreateSubscriptionInvoiceAsync(
             subscription.Id,
             invoiceId,
@@ -79,10 +66,10 @@ public class SubscriptionService : ISubscriptionService
 
     public async Task<SubscriptionDetailsDto> UpdateSubscriptionAsync(string trainerSsn, Guid subscriptionId, SubscriptionUpdateModel updateModel)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+		TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-        var updatedSubscription = await _subscriptionRepository.UpdateSubscriptionAsync(subscriptionId, updateModel, trainer.Id)
+		SubscriptionDetailsDto updatedSubscription = await _subscriptionRepository.UpdateSubscriptionAsync(subscriptionId, updateModel, trainer.Id)
             ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
 
         return updatedSubscription;
@@ -90,32 +77,30 @@ public class SubscriptionService : ISubscriptionService
 
     public async Task<IEnumerable<SubscriptionDto>> GetAllSubscriptionsAsync(string trainerSsn)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn);
-        if (trainer == null)
-        {
-            throw new Exception("Trainer not found");
-        }
-
-        return await _subscriptionRepository.GetAllSubscriptionsAsync(trainer.Id);
+		TrainerDto? trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn) 
+            ?? throw new Exception("Trainer not found");
+            
+		return await _subscriptionRepository.GetAllSubscriptionsAsync(trainer.Id);
     }
 
     public async Task<SubscriptionDetailsDto> GetSubscriptionByIdAsync(string trainerSsn, Guid subscriptionId)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
-            ?? throw new UnauthorizedException("Invalid trainer credentials.");        
+		TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+            ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-        var subscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
+		SubscriptionDetailsDto subscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
             ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
 
         return subscription;
     }
 
+    // 
     public async Task DeactivateSubscriptionAsync(string trainerSsn, Guid subscriptionId)
     {
-        var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+		TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
             ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-        var existingSubscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
+		SubscriptionDetailsDto existingSubscription = await _subscriptionRepository.GetSubscriptionByIdAsync(trainer.Id, subscriptionId)
             ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
 
         await _subscriptionRepository.DeactivateSubscriptionAsync(subscriptionId);

@@ -1,9 +1,8 @@
 using Hangfire.Dashboard;
 
-namespace Subster.API.Filters
+namespace Subster.API.Filters;
+
+public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
 {
-    public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
-    {
-        public bool Authorize(DashboardContext context) => true;
-    }
+    public bool Authorize(DashboardContext context) => true;
 }

@@ -5,25 +5,18 @@ using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations;
 
-public class ClientDashboardService : IClientDashboardService
+public class ClientDashboardService(
+	ISubscriptionRepository subscriptionRepository,
+	ITrainerRepository trainerRepository,
+	IClientRepository clientRepository) : IClientDashboardService
 {
-    private readonly ISubscriptionRepository _subscriptionRepository;
-    private readonly ITrainerRepository _trainerRepository;
-    private readonly IClientRepository _clientRepository;
+    private readonly ISubscriptionRepository _subscriptionRepository = subscriptionRepository;
+    private readonly ITrainerRepository _trainerRepository = trainerRepository;
+    private readonly IClientRepository _clientRepository = clientRepository;
 
-    public ClientDashboardService(
-        ISubscriptionRepository subscriptionRepository,
-        ITrainerRepository trainerRepository,
-        IClientRepository clientRepository)
+	public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsByClientSsnAsync(string clientSsn)
     {
-        _subscriptionRepository = subscriptionRepository;
-        _trainerRepository = trainerRepository;
-        _clientRepository = clientRepository;
-    }
-
-    public async Task<IEnumerable<SubscriptionDto>> GetSubscriptionsByClientSsnAsync(string clientSsn)
-    {
-        var client = await _clientRepository.GetClientBySsnAsync(clientSsn)
+		ClientDto client = await _clientRepository.GetClientBySsnAsync(clientSsn)
             ?? throw new UnauthorizedException($"Invalid client credentials.");
         
         return await _subscriptionRepository.GetSubscriptionsByClientIdAsync(client.Id);
@@ -31,10 +24,10 @@ public class ClientDashboardService : IClientDashboardService
 
     public async Task DeactivateSubscriptionAsync(string clientSsn, Guid subscriptionId)
     {
-        var client = await _clientRepository.GetClientBySsnAsync(clientSsn)
+		ClientDto client = await _clientRepository.GetClientBySsnAsync(clientSsn)
             ?? throw new UnauthorizedException($"Invalid client credentials.");
 
-        var existingSubscription = await _subscriptionRepository.GetClientSubscriptionByIdAsync(client.Id, subscriptionId)
+		SubscriptionDetailsDto existingSubscription = await _subscriptionRepository.GetClientSubscriptionByIdAsync(client.Id, subscriptionId)
             ?? throw new NotFoundException($"Subscription with id {subscriptionId} not found.");
 
         await _subscriptionRepository.DeactivateSubscriptionAsync(subscriptionId);

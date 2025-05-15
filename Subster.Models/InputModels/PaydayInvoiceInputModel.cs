@@ -6,7 +6,8 @@ public class PaydayInvoiceInputModel
     public string InvoiceDate { get; set; } = null!;
     public string DueDate { get; set; } = null!;
     public string FinalDueDate { get; set; } = null!;
-    // Default value is "ISK" (atleast for now)
+
+    // Only support ISK for now
     public string CurrencyCode { get; set; } = "ISK";
     public Line[] Lines { get; set; } = null!;
 }

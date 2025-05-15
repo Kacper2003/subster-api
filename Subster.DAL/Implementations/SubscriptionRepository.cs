@@ -8,24 +8,18 @@ using Subster.Models.UpdateModels;
 
 namespace Subster.DAL.Implementations;
 
-public class SubscriptionRepository : ISubscriptionRepository
+public class SubscriptionRepository(SubsterDbContext dbContext) : ISubscriptionRepository
 {
-    private readonly SubsterDbContext _dbContext;
+    private readonly SubsterDbContext _dbContext = dbContext;
 
-    public SubscriptionRepository(SubsterDbContext dbContext)
+	public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, Guid trainerId, Guid clientId)
     {
-        _dbContext = dbContext;
-    }
-
-    public async Task<SubscriptionDetailsDto> CreateSubscriptionAsync(SubscriptionInputModel inputModel, Guid trainerId, Guid clientId)
-    {
+        // Service already validates the input model
         var subscription = new Subscription
         {
-            // First foreign keys
             TrainerId           = trainerId,
             ClientId            = clientId,
             ProgramId           = inputModel.ProgramId,
-
             StartDate           = inputModel.StartDate,
             DurationInMonths    = inputModel.DurationInMonths,
             IsActive            = true
@@ -34,7 +28,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         await _dbContext.Subscriptions.AddAsync(subscription);
         await _dbContext.SaveChangesAsync();
 
-        var savedSubscription = await _dbContext.Subscriptions
+		Subscription? savedSubscription = await _dbContext.Subscriptions
             .Include(s => s.Client)
             .Include(s => s.Program)
             .FirstOrDefaultAsync(s => s.Id == subscription.Id);
@@ -163,7 +157,7 @@ public class SubscriptionRepository : ISubscriptionRepository
 
     public async Task<IEnumerable<Subscription>> GetActiveWithInvoicesAsync(DateTime asOfUtc)
     {
-        var date = asOfUtc.Date;
+		DateTime date = asOfUtc.Date;
 
         return await _dbContext.Subscriptions
             .Include(s => s.Trainer)
@@ -179,7 +173,7 @@ public class SubscriptionRepository : ISubscriptionRepository
 
     public async Task<SubscriptionDetailsDto?> UpdateSubscriptionAsync(Guid subscriptionId, SubscriptionUpdateModel updateModel, Guid trainerId)
     {
-        var subscription = await _dbContext.Subscriptions
+		Subscription? subscription = await _dbContext.Subscriptions
             .Include(s => s.Program)
             .FirstOrDefaultAsync(s => s.TrainerId == trainerId && s.Id == subscriptionId);
 
@@ -188,16 +182,16 @@ public class SubscriptionRepository : ISubscriptionRepository
 
         if (updateModel.StartDate.HasValue)
         {
-            // check if it has started 
+            // If the subscription has already started, we cannot change the start date
             if (subscription.StartDate.Date < DateTime.UtcNow.Date)
                 throw new InvalidOperationException("Cannot change start date of an already started subscription.");
             
+            // If the new start date is in the past, we cannot set it
             if (updateModel.StartDate.Value.Date < DateTime.UtcNow.Date)
                 throw new InvalidOperationException("Start date cannot be in the past.");
 
             subscription.StartDate = updateModel.StartDate.Value;
 
-            // save 
             await _dbContext.SaveChangesAsync();
         }
 
@@ -222,7 +216,7 @@ public class SubscriptionRepository : ISubscriptionRepository
 
     public async Task DeactivateSubscriptionAsync(Guid subscriptionId)
     {
-        var subscription = await _dbContext.Subscriptions
+		Subscription? subscription = await _dbContext.Subscriptions
             .FirstOrDefaultAsync(s => s.Id == subscriptionId);
 
         if (subscription != null)

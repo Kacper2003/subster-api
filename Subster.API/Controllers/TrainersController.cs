@@ -15,18 +15,12 @@ namespace Subster.API.Controllers;
 [Produces("application/json")]
 [Consumes("application/json")]
 [SwaggerTag("Þjálfarar")]
-public class TrainersController : ControllerBase
+public class TrainersController(ITrainerService trainerService, IPaydayService paydayService) : ControllerBase
 {
-    private readonly ITrainerService _trainerService;
-    private readonly IPaydayService _paydayService;
+    private readonly ITrainerService _trainerService = trainerService;
+    private readonly IPaydayService _paydayService = paydayService;
 
-    public TrainersController(ITrainerService trainerService, IPaydayService paydayService)
-    {
-        _trainerService = trainerService;
-        _paydayService = paydayService;
-    }
-
-    [HttpGet("me")]
+	[HttpGet("me")]
     [SwaggerOperation(
         Summary     = "Sækja prófíl þjálfara",
         Description = "Skilar upplýsingum um núverandi innskráðan þjálfara."
@@ -38,7 +32,7 @@ public class TrainersController : ControllerBase
         if (string.IsNullOrEmpty(trainerSsn))
             return Unauthorized("SSN not found in token");
 
-        var trainer = await _trainerService.GetTrainerDetailsBySsnAsync(trainerSsn);
+		TrainerDetailsDto trainer = await _trainerService.GetTrainerDetailsBySsnAsync(trainerSsn);
         return Ok(trainer);
     }
 
@@ -55,7 +49,7 @@ public class TrainersController : ControllerBase
         if (string.IsNullOrEmpty(trainerSsn))
             return Unauthorized("SSN not found in token");
 
-        var updatedTrainer = await _trainerService.UpdateTrainerDetailsAsync(trainerSsn, updateModel);
+		TrainerDetailsDto updatedTrainer = await _trainerService.UpdateTrainerDetailsAsync(trainerSsn, updateModel);
         return NoContent();
     }
 

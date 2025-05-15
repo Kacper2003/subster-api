@@ -10,37 +10,33 @@ using Subster.DAL.Utilities;
 
 namespace Subster.API.Services.Implementations;
 
-public class PaydayTokenService : ITokenService
+public class PaydayTokenService(
+	IPaydayApiClient paydayClient,
+	IMemoryCache cache,
+	EncryptionHelper encryptionHelper) : ITokenService
 {
-    private readonly IPaydayApiClient _paydayClient;
-    private readonly IMemoryCache      _cache;
-    private readonly EncryptionHelper _encryptionHelper;
+    private readonly IPaydayApiClient _paydayClient = paydayClient;
+    private readonly IMemoryCache _cache = cache;
+    private readonly EncryptionHelper _encryptionHelper = encryptionHelper;
     private const string CacheKeyPrefix = "payday_token_";
 
-    public PaydayTokenService(
-        IPaydayApiClient paydayClient,
-        IMemoryCache cache,
-        EncryptionHelper encryptionHelper)
+	public async Task<string> GetTokenAsync(Guid trainerId, string clientId, string clientSecret)
     {
-        _paydayClient      = paydayClient;
-        _cache             = cache;
-        _encryptionHelper  = encryptionHelper;
-    }
-
-    public async Task<string> GetTokenAsync(Guid trainerId, string clientId, string clientSecret)
-    {
+        // First, check if the token is already cached
         var cacheKey = CacheKeyPrefix + trainerId;
         if (_cache.TryGetValue(cacheKey, out string? protectedToken) && !string.IsNullOrEmpty(protectedToken))
         {
             return _encryptionHelper.Unprotect(protectedToken);
         }
 
-        var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret) 
+        // If not cached, authenticate with the Payday API
+		Models.Dtos.Payday.PaydayTokenResponse response = await _paydayClient.AuthenticateAsync(clientId, clientSecret) 
             ?? throw new UnauthorizedException("Failed to authenticate with Payday API.");
 
         if (string.IsNullOrEmpty(response.AccessToken))
             throw new Exception("Failed to retrieve access token from Payday API.");
 
+        // Cache the token with an expiration time
         var expiresIn = TimeSpan.FromSeconds(response.ExpiresIn);
         _cache.Set(cacheKey,
                     _encryptionHelper.Protect(response.AccessToken),
@@ -49,9 +45,10 @@ public class PaydayTokenService : ITokenService
         return response.AccessToken;
     }
 
+    // This method is used to validate the Payday credentials of the trainer
     public async Task<bool> ValidateCredentialsAsync(string clientId, string clientSecret)
     {
-        var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
+		Models.Dtos.Payday.PaydayTokenResponse? response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
         return response != null;
     }
 

@@ -3,24 +3,24 @@ using Subster.Models.ResponseModels;
 
 namespace Subster.API.Clients;
 
-public class TaktikalApiClient : ITaktikalApiClient
+public class TaktikalApiClient(HttpClient http) : ITaktikalApiClient
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient _http = http;
     private const string StartPath = "auth/start";
     private const string PollPath  = "auth/poll";
 
-    public TaktikalApiClient(HttpClient http) => _http = http;
-
-    public async Task<StartAuthResponseModel?> StartAsync(StartAuthInputModel dto)
+    // Call to Taktikal API to start the authentication process
+	public async Task<StartAuthResponseModel?> StartAsync(StartAuthInputModel dto)
     {
-        var resp = await _http.PostAsJsonAsync(StartPath, dto);
+		HttpResponseMessage resp = await _http.PostAsJsonAsync(StartPath, dto);
         if (!resp.IsSuccessStatusCode) return null;
         return await resp.Content.ReadFromJsonAsync<StartAuthResponseModel>();
     }
 
+    // Call to Taktikal API to poll the authentication status
     public async Task<PollResponseModel?> PollAsync(PollAuthInputModel dto)
     {
-        var resp = await _http.PostAsJsonAsync(PollPath, dto);
+		HttpResponseMessage resp = await _http.PostAsJsonAsync(PollPath, dto);
         if (!resp.IsSuccessStatusCode) return null;
         return await resp.Content.ReadFromJsonAsync<PollResponseModel>();
     }

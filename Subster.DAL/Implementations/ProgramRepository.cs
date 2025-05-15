@@ -8,16 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Subster.DAL.Implementations;
 
-public class ProgramRepository : IProgramRepository
+public class ProgramRepository(SubsterDbContext dbContext) : IProgramRepository
 {
-    private readonly SubsterDbContext _dbContext;
+    private readonly SubsterDbContext _dbContext = dbContext;
 
-    public ProgramRepository(SubsterDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public async Task<ProgramDto> CreateProgramAsync(ProgramInputModel inputModel, Guid trainerId)
+	public async Task<ProgramDto> CreateProgramAsync(ProgramInputModel inputModel, Guid trainerId)
     {
         // Validate the vat
         if (inputModel.VatPercentage < 0 || inputModel.VatPercentage > 100)
@@ -27,12 +22,11 @@ public class ProgramRepository : IProgramRepository
         var exclProvided = inputModel.UnitPriceExcludingVat.HasValue;
         var inclProvided = inputModel.UnitPriceIncludingVat.HasValue;
 
-        // Neither provided → error
+        // Neither provided should throw an exception
         if (!exclProvided && !inclProvided)
             throw new ArgumentException("Either UnitPriceExcludingVat or UnitPriceIncludingVat must be provided.");
 
-        // If both provided, Payday says to ignore the including-VAT value
-        // so we only use excluding-VAT in that case:
+        // If both provided, Payday says to ignore the including-VAT value, so we only use excluding-VAT in that case:
         if (exclProvided && inputModel.UnitPriceExcludingVat < 0
         || inclProvided && inputModel.UnitPriceIncludingVat < 0)
         {
@@ -82,8 +76,7 @@ public class ProgramRepository : IProgramRepository
 
     public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(Guid trainerId)
     {
-        // only active programs
-        var programs = await _dbContext.Programs
+		List<ProgramDto> programs = await _dbContext.Programs
             .Where(p => p.TrainerId == trainerId && p.IsActive)
             .Select(p => new ProgramDto
             {
@@ -101,7 +94,7 @@ public class ProgramRepository : IProgramRepository
 
     public async Task<ProgramDto?> GetProgramByIdAsync(Guid trainerId, Guid programId)
     {
-        var program = await _dbContext.Programs
+		ProgramDto? program = await _dbContext.Programs
             .Where(p => p.TrainerId == trainerId && p.Id == programId && p.IsActive)
             .Select(p => new ProgramDto
             {
@@ -119,12 +112,13 @@ public class ProgramRepository : IProgramRepository
 
     public async Task<ProgramDto?> UpdateProgramAsync(Guid programId, ProgramUpdateModel updateModel, Guid trainerId)
     {
-        var program = await _dbContext.Programs
+		Program? program = await _dbContext.Programs
             .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);
 
         if (program == null)
             return null;
 
+        // Same logic as in the creation, everything has to be validated the same way
         var newVat = updateModel.VatPercentage ?? program.VatPercentage;
         if (newVat < 0 || newVat > 100)
             throw new ArgumentException("VatPercentage must be between 0 and 100.");
@@ -175,7 +169,7 @@ public class ProgramRepository : IProgramRepository
     
     public async Task DeactivateProgramAsync(Guid trainerId, Guid programId)
     {
-        var program = await _dbContext.Programs
+		Program? program = await _dbContext.Programs
             .FirstOrDefaultAsync(p => p.TrainerId == trainerId && p.Id == programId);
 
         if (program != null)
