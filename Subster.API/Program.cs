@@ -152,18 +152,12 @@ builder.Services.AddMemoryCache();
 
 // Database context
 var connString = builder.Configuration.GetConnectionString("SubsterDb")!;
+
 builder.Services.AddDbContext<SubsterDbContext>(options =>
-    options.UseNpgsql(connString));
-
-// Apply migrations at startup
-DbContextOptions<SubsterDbContext> dbOptions = new DbContextOptionsBuilder<SubsterDbContext>()
-    .UseNpgsql(connString)
-    .Options;
-
-using (var migrationCtx = new SubsterDbContext(dbOptions))
-{
-    migrationCtx.Database.Migrate();
-}
+    options.UseNpgsql(
+        connString
+    )
+);
 
 // Data Protection
 builder.Services
@@ -185,6 +179,12 @@ builder.Services.AddHangfire(config => config
 builder.Services.AddHangfireServer();
 
 WebApplication app = builder.Build();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+	SubsterDbContext ctx = scope.ServiceProvider.GetRequiredService<SubsterDbContext>();
+    ctx.Database.Migrate();
+}
 
 // Middleware pipeline
 app.UseHttpsRedirection();
