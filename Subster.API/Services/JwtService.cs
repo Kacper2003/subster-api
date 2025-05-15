@@ -18,8 +18,12 @@ public class JwtService
     
     public string GenerateToken(string ssn, string name, string role)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
+        var jwtSettings = _configuration.GetSection("JwtSettings")
+            ?? throw new Exception("JWT settings not configured");
+
+        var secret = jwtSettings["SecretKey"] ?? throw new Exception("JWT secret key not found");
+        var key = Encoding.UTF8.GetBytes(secret);
+
         var tokenHandler = new JwtSecurityTokenHandler();
 
         // Set up the claims you want inside the token
@@ -31,12 +35,17 @@ public class JwtService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        var expiresInMinuntes = jwtSettings.GetValue<int>("TokenExpirationMinutes");
+
+        var issuer = jwtSettings["Issuer"] ?? throw new Exception("JWT issuer not found");
+        var audience = jwtSettings["Audience"] ?? throw new Exception("JWT audience not found");
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(Convert.ToInt32(jwtSettings["TokenExpirationMinutes"])),
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
+            Expires = DateTime.UtcNow.AddMinutes(expiresInMinuntes),
+            Issuer = issuer,
+            Audience = audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 

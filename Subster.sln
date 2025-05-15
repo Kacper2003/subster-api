@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subster.DAL", "Subster.DAL\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subster.Models", "Subster.Models\Subster.Models.csproj", "{E45B1125-9966-43B2-BAB2-AB6812F6FAFA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subster.Tests", "Subster.Tests\Subster.Tests.csproj", "{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{E45B1125-9966-43B2-BAB2-AB6812F6FAFA}.Release|x64.Build.0 = Release|Any CPU
 		{E45B1125-9966-43B2-BAB2-AB6812F6FAFA}.Release|x86.ActiveCfg = Release|Any CPU
 		{E45B1125-9966-43B2-BAB2-AB6812F6FAFA}.Release|x86.Build.0 = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|x64.Build.0 = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Debug|x86.Build.0 = Debug|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|x64.ActiveCfg = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|x64.Build.0 = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|x86.ActiveCfg = Release|Any CPU
+		{05A1DC76-BC3C-4F8C-9A6B-F3CC32D9B8AF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

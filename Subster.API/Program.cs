@@ -32,8 +32,9 @@ builder.Configuration.AddEnvironmentVariables();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var blabla = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]) ?? throw new Exception("Secret blabla not found");
+var jwtSettings = builder.Configuration.GetSection("JwtSettings") ?? throw new Exception("JWT settings not configured");
+var jwtSecret = jwtSettings["SecretKey"] ?? throw new Exception("JWT secret key not found");
+var jwtSecretBytes = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -53,7 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(blabla),
+            IssuerSigningKey = new SymmetricSecurityKey(jwtSecretBytes),
             ValidateIssuer = true,
             ValidIssuer = jwtSettings["Issuer"],
             ValidateAudience = true,
@@ -71,8 +72,8 @@ builder.Services
   .ConfigureApiBehaviorOptions(opts =>
     opts.InvalidModelStateResponseFactory = ctx =>
     {
-      var messages = ctx.ModelState
-          .SelectMany(kv => kv.Value.Errors)
+      var messages = ctx.ModelState!
+          .SelectMany(kv => kv.Value!.Errors)
           .Select(e => e.ErrorMessage)
           .Distinct();
       var combined = string.Join("; ", messages);
@@ -101,7 +102,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services
     .AddHttpClient<IPaydayApiClient, PaydayApiClient>(client =>
     {
-        client.BaseAddress = new Uri(builder.Configuration["Payday:BaseUrl"]);
+        client.BaseAddress = new Uri(builder.Configuration["Payday:BaseUrl"] ?? throw new Exception("Payday base URL not configured"));
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
@@ -109,7 +110,7 @@ builder.Services
 builder.Services
     .AddHttpClient<ITaktikalApiClient, TaktikalApiClient>(client =>
     {
-        client.BaseAddress = new Uri(builder.Configuration["Taktikal:BaseUrl"]!);
+        client.BaseAddress = new Uri(builder.Configuration["Taktikal:BaseUrl"] ?? throw new Exception("Taktikal base URL not configured"));
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
@@ -132,7 +133,7 @@ builder.Services.AddScoped<IClientDashboardService, ClientDashboardService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<ITokenService, PaydayTokenService>();
 builder.Services.AddScoped<ISubscriptionBillingService, SubscriptionBillingService>();
-builder.Services.AddTransient<EncryptionHelper>();
+builder.Services.AddSingleton<EncryptionHelper>();
 
 builder.Services.AddMemoryCache();
 
@@ -141,6 +142,15 @@ var connString = builder.Configuration.GetConnectionString("SubsterDb")!;
 builder.Services.AddDbContext<SubsterDbContext>(options =>
     options.UseNpgsql(connString)
 );
+
+var dbOptions = new DbContextOptionsBuilder<SubsterDbContext>()
+    .UseNpgsql(connString)
+    .Options;
+
+using (var migrationCtx = new SubsterDbContext(dbOptions))
+{
+    migrationCtx.Database.Migrate();
+}
 
 // Data Protection
 builder.Services
@@ -189,13 +199,6 @@ RecurringJob.AddOrUpdate<SubscriptionBillingJob>(
     }
 );
 
-// Run migrations each start
-using (var scoper = app.Services.CreateScope())
-{
-    var dbContext = scoper.ServiceProvider.GetRequiredService<SubsterDbContext>();
-    dbContext.Database.Migrate();
-}
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -206,7 +209,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<ApiExceptionMiddleware>();
+// app.UseMiddleware<ApiExceptionMiddleware>();
 
 app.MapControllers();
 

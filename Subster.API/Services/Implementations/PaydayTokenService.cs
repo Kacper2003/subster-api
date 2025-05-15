@@ -30,15 +30,16 @@ public class PaydayTokenService : ITokenService
     public async Task<string> GetTokenAsync(Guid trainerId, string clientId, string clientSecret)
     {
         var cacheKey = CacheKeyPrefix + trainerId;
-        if (_cache.TryGetValue(cacheKey, out string protectedToken))
+        if (_cache.TryGetValue(cacheKey, out string? protectedToken) && !string.IsNullOrEmpty(protectedToken))
         {
             return _encryptionHelper.Unprotect(protectedToken);
         }
 
-        var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret);
-        
-        if (response == null)
-            throw new UnauthorizedException("Failed to authenticate with Payday API.");
+        var response = await _paydayClient.AuthenticateAsync(clientId, clientSecret) 
+            ?? throw new UnauthorizedException("Failed to authenticate with Payday API.");
+
+        if (string.IsNullOrEmpty(response.AccessToken))
+            throw new Exception("Failed to retrieve access token from Payday API.");
 
         var expiresIn = TimeSpan.FromSeconds(response.ExpiresIn);
         _cache.Set(cacheKey,
