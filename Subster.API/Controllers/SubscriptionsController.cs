@@ -15,26 +15,18 @@ namespace Subster.API.Controllers;
 [Produces("application/json")]
 [Consumes("application/json")]
 [SwaggerTag("Áskriftir")]
-public class SubscriptionsController : ControllerBase
+public class SubscriptionsController(
+	ITaktikalAuthService taktikalAuthService,
+	ISubscriptionService subscriptionService,
+	IClientService clientService,
+	IProgramService programService) : ControllerBase
 {
-    private readonly ITaktikalAuthService _taktikalAuthService;
-    private readonly ISubscriptionService _subscriptionService;
-    private readonly IClientService _clientService;
-    private readonly IProgramService _programService;
+    private readonly ITaktikalAuthService _taktikalAuthService = taktikalAuthService;
+    private readonly ISubscriptionService _subscriptionService = subscriptionService;
+    private readonly IClientService _clientService = clientService;
+    private readonly IProgramService _programService = programService;
 
-    public SubscriptionsController(
-        ITaktikalAuthService taktikalAuthService,
-        ISubscriptionService subscriptionService,
-        IClientService clientService,
-        IProgramService programService)
-    {
-        _taktikalAuthService = taktikalAuthService;
-        _subscriptionService = subscriptionService;
-        _clientService = clientService;
-        _programService = programService;
-    }
-
-    [HttpGet]
+	[HttpGet]
     [SwaggerOperation(
         Summary     = "Sækja allar áskriftir",
         Description = "Skilar lista af öllum áskriftum sem tengjast innskráðum þjálfara."
@@ -48,7 +40,7 @@ public class SubscriptionsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var subscriptions = await _subscriptionService.GetAllSubscriptionsAsync(trainerSsn);
+		IEnumerable<SubscriptionDto> subscriptions = await _subscriptionService.GetAllSubscriptionsAsync(trainerSsn);
         return Ok(subscriptions);
     }
 
@@ -66,7 +58,7 @@ public class SubscriptionsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var subscription = await _subscriptionService.GetSubscriptionByIdAsync(trainerSsn, id);
+		SubscriptionDetailsDto subscription = await _subscriptionService.GetSubscriptionByIdAsync(trainerSsn, id);
         return Ok(subscription);
     }
 
@@ -85,8 +77,8 @@ public class SubscriptionsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        // Delegate full creation flow to service
-        var created = await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn);
+		// Delegate full creation flow to service
+		SubscriptionDetailsDto created = await _subscriptionService.CreateSubscriptionAsync(inputModel, trainerSsn);
 
         return CreatedAtAction(nameof(GetSubscriptionById), new { id = created.Id }, created);
     }
@@ -106,7 +98,7 @@ public class SubscriptionsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var updatedSubscription = await _subscriptionService.UpdateSubscriptionAsync(trainerSsn, id, updateModel);
+		SubscriptionDetailsDto updatedSubscription = await _subscriptionService.UpdateSubscriptionAsync(trainerSsn, id, updateModel);
         return Ok(updatedSubscription);
     }
 

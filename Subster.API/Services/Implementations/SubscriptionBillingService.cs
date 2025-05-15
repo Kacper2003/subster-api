@@ -3,33 +3,29 @@ using Subster.DAL.Interfaces;
 using Subster.Models.Dtos;
 
 namespace Subster.API.Services.Implementations;
-public class SubscriptionBillingService : ISubscriptionBillingService
+public class SubscriptionBillingService(ISubscriptionRepository subscriptionRepository, IPaydayService paydayService) : ISubscriptionBillingService
 {
-    private readonly ISubscriptionRepository _subscriptionRepository;
-    private readonly IPaydayService          _paydayService;
+    private readonly ISubscriptionRepository _subscriptionRepository = subscriptionRepository;
+    private readonly IPaydayService _paydayService = paydayService;
 
-    public SubscriptionBillingService(ISubscriptionRepository subscriptionRepository, IPaydayService paydayService)
+	public async Task ProcessDueInvoicesAsync(DateTime asOfUtc)
     {
-        _subscriptionRepository = subscriptionRepository;
-        _paydayService = paydayService;
-    }
+		DateTime today = asOfUtc.Date;
 
-    public async Task ProcessDueInvoicesAsync(DateTime asOfUtc)
-    {
-        var today = asOfUtc.Date;
-        // fetch active subscriptions + their invoice mappings
-        var subscriptions = await _subscriptionRepository.GetActiveWithInvoicesAsync(today);
+        // Fetch all active subscriptions with their invoices
+		IEnumerable<DAL.Entities.Subscription> subscriptions = await _subscriptionRepository.GetActiveWithInvoicesAsync(today);
 
-        Console.WriteLine($"Found {subscriptions.Count()} active subscriptions with invoices.");
-
-        foreach (var s in subscriptions)
-        {
+        // Loop through each subscription
+        foreach (DAL.Entities.Subscription s in subscriptions)
+        {   
+            // If the subscription should have ended, deactivate it
             if (today >= s.EndDate)
             {
                 await _subscriptionRepository.DeactivateSubscriptionAsync(s.Id);
                 continue;
             }
-            // calculate how many months we should have billed so far
+
+            // Calculate how many months we should have billed so far
             var monthsElapsed =
                     ((today.Year - s.StartDate.Year) * 12)
                 + today.Month
@@ -38,13 +34,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
             var maxCycle = Math.Min(monthsElapsed, s.DurationInMonths);
 
-            for (int cycle = 1; cycle <= maxCycle; cycle++)
+            for (var cycle = 1; cycle <= maxCycle; cycle++)
             {
-                // already invoiced?
+                // Check if we have already billed for this cycle
                 if (s.SubscriptionInvoices.Any(si => si.CycleNumber == cycle))
                     continue;
 
-                // send the invoice via your PaydayService
+                // Get the program details
                 var programDto = new ProgramDto
                 {
                     Id                     = s.Program.Id,
@@ -53,12 +49,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
                     VatPercentage          = s.Program.VatPercentage
                 };
 
+                // Send the invoice to Payday
                 var invoiceId = await _paydayService.CreateInvoiceAsync(
                     trainerSsn: s.Trainer.Ssn,
                     clientSsn:  s.Client.Ssn,
                     program:    programDto);
 
-                // record it
+                // Link the invoice to the subscription
                 await _subscriptionRepository.CreateSubscriptionInvoiceAsync(
                     subscriptionId:    s.Id,
                     paydayInvoiceId: invoiceId,

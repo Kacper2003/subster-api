@@ -12,18 +12,12 @@ using Subster.Models.UpdateModels;
 
 namespace Subster.DAL.Implementations
 {
-    public class TrainerRepository : ITrainerRepository
+    public class TrainerRepository(SubsterDbContext dbContext, EncryptionHelper encryptionHelper) : ITrainerRepository
     {
-        private readonly SubsterDbContext _dbContext;
-        private readonly EncryptionHelper _encryptionHelper;
+        private readonly SubsterDbContext _dbContext = dbContext;
+        private readonly EncryptionHelper _encryptionHelper = encryptionHelper;
 
-        public TrainerRepository(SubsterDbContext dbContext, EncryptionHelper encryptionHelper)
-        {
-            _dbContext = dbContext;
-            _encryptionHelper = encryptionHelper;
-        }
-
-        public async Task<IEnumerable<TrainerDto>> GetAllTrainersAsync()
+		public async Task<IEnumerable<TrainerDto>> GetAllTrainersAsync()
         {
             return await _dbContext.Trainers
                 .Select(u => new TrainerDto
@@ -66,7 +60,7 @@ namespace Subster.DAL.Implementations
 
         public async Task<TrainerDetailsDto?> GetTrainerDetailsByIdAsync(Guid trainerId)
         {
-            var trainer = await _dbContext.Trainers
+			TrainerDetailsDto? trainer = await _dbContext.Trainers
                 .Where(u => u.Id == trainerId)
                 .Select(u => new TrainerDetailsDto
                 {
@@ -92,7 +86,7 @@ namespace Subster.DAL.Implementations
 
         public async Task<TrainerDetailsDto?> UpdateTrainerDetailsAsync(Guid trainerId, TrainerUpdateModel updateModel)
         {
-            var trainer = await _dbContext.Trainers
+			Trainer? trainer = await _dbContext.Trainers
                 .Include(u => u.Programs)
                 .FirstOrDefaultAsync(u => u.Id == trainerId);
 
@@ -135,7 +129,7 @@ namespace Subster.DAL.Implementations
 
         public async Task<Trainer?> FindTrainerEntityBySsnAsync(string ssn)
         {
-            var trainer = await _dbContext.Trainers
+			Trainer? trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Ssn == ssn);
 
             if (trainer != null)
@@ -153,7 +147,7 @@ namespace Subster.DAL.Implementations
 
         public async Task<Trainer?> FindTrainerEntityByIdAsync(Guid trainerId)
         {
-            var trainer = await _dbContext.Trainers
+			Trainer? trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Id == trainerId);
 
             if (trainer != null)
@@ -171,8 +165,8 @@ namespace Subster.DAL.Implementations
 
         public async Task CreateTrainerAsync(UserInputModel inputModel)
         {
-            // Use async lookup
-            var existingTrainer = await _dbContext.Trainers
+			// Use async lookup
+			Trainer? existingTrainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Ssn == inputModel.Ssn);
 
             if (existingTrainer == null)
@@ -182,7 +176,6 @@ namespace Subster.DAL.Implementations
                     Name = inputModel.Name,
                     Ssn = inputModel.Ssn,
                     PhoneNumber = inputModel.PhoneNumber,
-                    CreatedAt = DateTime.UtcNow
                 };
 
                 _dbContext.Trainers.Add(trainer);
@@ -197,7 +190,7 @@ namespace Subster.DAL.Implementations
 
         public async Task UpdatePaydayCredentialsAsync(Guid trainerId, string? clientId, string? clientSecret)
         {
-            var trainer = await _dbContext.Trainers
+			Trainer? trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Id == trainerId);
 
             if (trainer == null)
@@ -216,7 +209,7 @@ namespace Subster.DAL.Implementations
 
         public async Task DeleteTrainerAsync(Guid trainerId)
         {
-            var trainer = await _dbContext.Trainers
+			Trainer? trainer = await _dbContext.Trainers
                 .FirstOrDefaultAsync(u => u.Id == trainerId);
 
             if (trainer == null)

@@ -1,28 +1,32 @@
-using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
+using System.Text;
+
 using DotNetEnv;
+
+using Hangfire;
+using Hangfire.PostgreSql;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
+using Subster.API.Clients;
+using Subster.API.Filters;
+using Subster.API.Jobs;
+using Subster.API.Middleware;
+using Subster.API.Services;
+using Subster.API.Services.Implementations;
+using Subster.API.Services.Interfaces;
 using Subster.DAL;
 using Subster.DAL.Implementations;
 using Subster.DAL.Interfaces;
 using Subster.DAL.Utilities;
-using Subster.API.Services;
-using Subster.API.Services.Interfaces;
-using Subster.API.Services.Implementations;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using Subster.API.Clients;
-using System.Net.Http.Headers;
-using Hangfire;
-using Hangfire.PostgreSql;
-using Subster.API.Jobs;
-using Subster.API.Filters;
-using Microsoft.AspNetCore.DataProtection;
-using Subster.API.Middleware;
 using Subster.Models;
-using Microsoft.AspNetCore.Mvc;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables
 Env.Load();
@@ -32,11 +36,14 @@ builder.Configuration.AddEnvironmentVariables();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-var jwtSettings = builder.Configuration.GetSection("JwtSettings") ?? throw new Exception("JWT settings not configured");
+// JWT settings and authentication
+IConfigurationSection jwtSettings = builder.Configuration.GetSection("JwtSettings")
+    ?? throw new Exception("JWT settings not configured");
 var jwtSecret = jwtSettings["SecretKey"] ?? throw new Exception("JWT secret key not found");
 var jwtSecretBytes = Encoding.UTF8.GetBytes(jwtSecret);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Events = new JwtBearerEvents
@@ -54,45 +61,47 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtSecretBytes),
-            ValidateIssuer = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidateAudience = true,
-            ValidAudience = jwtSettings["Audience"],
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            IssuerSigningKey         = new SymmetricSecurityKey(jwtSecretBytes),
+            ValidateIssuer           = true,
+            ValidIssuer              = jwtSettings["Issuer"],
+            ValidateAudience         = true,
+            ValidAudience            = jwtSettings["Audience"],
+            ValidateLifetime         = true,
+            ClockSkew                = TimeSpan.Zero
         };
     });
 
 builder.Services.AddAuthorization();
-// Health checks for Render
+
+// Health checks and API behavior
 builder.Services.AddHealthChecks();
 builder.Services
-  .AddControllers()
-  .ConfigureApiBehaviorOptions(opts =>
-    opts.InvalidModelStateResponseFactory = ctx =>
-    {
-      var messages = ctx.ModelState!
-          .SelectMany(kv => kv.Value!.Errors)
-          .Select(e => e.ErrorMessage)
-          .Distinct();
-      var combined = string.Join("; ", messages);
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(opts =>
+        opts.InvalidModelStateResponseFactory = ctx =>
+        {
+            IEnumerable<string> messages = ctx.ModelState!
+                .SelectMany(kv => kv.Value!.Errors)
+                .Select(e => e.ErrorMessage)
+                .Distinct();
+            var combined = string.Join("; ", messages);
 
-      var badRequest = new ApiError {
-        StatusCode = StatusCodes.Status400BadRequest,
-        Message    = combined
-      };
-      return new BadRequestObjectResult(badRequest);
-    });
+            var badRequest = new ApiError
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message    = combined
+            };
+            return new BadRequestObjectResult(badRequest);
+        });
 
-// OpenAPI
+// OpenAPI / Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Subster API",
-        Version = "v1",
+        Title       = "Subster API",
+        Version     = "v1",
         Description = "API for personal trainers and their clients"
     });
     options.EnableAnnotations();
@@ -102,7 +111,9 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services
     .AddHttpClient<IPaydayApiClient, PaydayApiClient>(client =>
     {
-        client.BaseAddress = new Uri(builder.Configuration["Payday:BaseUrl"] ?? throw new Exception("Payday base URL not configured"));
+        client.BaseAddress = new Uri(
+            builder.Configuration["Payday:BaseUrl"]
+            ?? throw new Exception("Payday base URL not configured"));
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
@@ -110,15 +121,17 @@ builder.Services
 builder.Services
     .AddHttpClient<ITaktikalApiClient, TaktikalApiClient>(client =>
     {
-        client.BaseAddress = new Uri(builder.Configuration["Taktikal:BaseUrl"] ?? throw new Exception("Taktikal base URL not configured"));
+        client.BaseAddress = new Uri(
+            builder.Configuration["Taktikal:BaseUrl"]
+            ?? throw new Exception("Taktikal base URL not configured"));
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
     });
 
-// DI: repositories & services
+// Dependency injection: repositories & services
 builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-builder.Services.AddScoped<IClientRepository, ClientRepository>();  
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IProgramRepository, ProgramRepository>();
 
 builder.Services.AddScoped<IPaydayService, PaydayService>();
@@ -137,13 +150,13 @@ builder.Services.AddSingleton<EncryptionHelper>();
 
 builder.Services.AddMemoryCache();
 
-// Database
+// Database context
 var connString = builder.Configuration.GetConnectionString("SubsterDb")!;
 builder.Services.AddDbContext<SubsterDbContext>(options =>
-    options.UseNpgsql(connString)
-);
+    options.UseNpgsql(connString));
 
-var dbOptions = new DbContextOptionsBuilder<SubsterDbContext>()
+// Apply migrations at startup
+DbContextOptions<SubsterDbContext> dbOptions = new DbContextOptionsBuilder<SubsterDbContext>()
     .UseNpgsql(connString)
     .Options;
 
@@ -158,7 +171,7 @@ builder.Services
     .SetApplicationName("Subster")
     .PersistKeysToDbContext<SubsterDbContext>();
 
-// Hangfire
+// Hangfire configuration
 builder.Services.AddHangfire(config => config
     .UsePostgreSqlStorage(
         bootstrap => bootstrap.UseNpgsqlConnection(connString),
@@ -169,26 +182,26 @@ builder.Services.AddHangfire(config => config
         }
     )
 );
-
 builder.Services.AddHangfireServer();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
+// Middleware pipeline
 app.UseHttpsRedirection();
 app.UseCors(builder =>
     builder.WithOrigins("http://localhost:3000")
            .AllowAnyHeader()
            .AllowAnyMethod()
            .AllowCredentials());
-
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [new AllowAllDashboardAuthorizationFilter()],
 });
 
-// Health check on root for Render
+// Health check endpoint
 app.MapHealthChecks("/");
 
+// Recurring job
 RecurringJob.AddOrUpdate<SubscriptionBillingJob>(
     "subscription-billing-job",
     job => job.ExecuteAsync(),
@@ -209,7 +222,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// app.UseMiddleware<ApiExceptionMiddleware>();
+app.UseMiddleware<ApiExceptionMiddleware>();
 
 app.MapControllers();
 

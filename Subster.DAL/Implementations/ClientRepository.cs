@@ -8,16 +8,11 @@ using Subster.Models.InputModels;
 
 namespace Subster.DAL.Implementations;
 
-public class ClientRepository : IClientRepository
+public class ClientRepository(SubsterDbContext dbContext) : IClientRepository
 {
-    private readonly SubsterDbContext _dbContext;
+    private readonly SubsterDbContext _dbContext = dbContext;
 
-    public ClientRepository(SubsterDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public async Task<IEnumerable<ClientDto>> GetAllClientsAsync()
+	public async Task<IEnumerable<ClientDto>> GetAllClientsAsync()
     {
         return await _dbContext.Clients
             .Select(u => new ClientDto
@@ -44,8 +39,8 @@ public class ClientRepository : IClientRepository
 
     public async Task<Guid> CreateClientAsync(UserInputModel inputModel)
     {
-        // Check if client already exists
-        var existingClient = _dbContext.Clients
+		// Check if client already exists
+		Client? existingClient = _dbContext.Clients
             .FirstOrDefault(u => u.Ssn == inputModel.Ssn);
 
         if (existingClient == null)
@@ -54,7 +49,6 @@ public class ClientRepository : IClientRepository
             {
                 Name = inputModel.Name,
                 Ssn = inputModel.Ssn,
-                // CreatedAt = DateTime.UtcNow
             };
 
             // Save new client to database

@@ -1,5 +1,4 @@
 using Moq;
-using Microsoft.Extensions.Configuration;
 using Subster.API.Services.Implementations;
 using Subster.API.Services.Interfaces;
 using Subster.DAL.Interfaces;
@@ -174,8 +173,8 @@ public class SubscriptionServiceTests
             ProgramId         = program.Id
         };
 
-        // Act
-        var result = await _service.CreateSubscriptionAsync(input, "T-SSN");
+		// Act
+		SubscriptionDetailsDto result = await _service.CreateSubscriptionAsync(input, "T-SSN");
 
         // Assert
         Assert.AreEqual(subscription.Id, result.Id);

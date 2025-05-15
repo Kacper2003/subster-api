@@ -2,21 +2,13 @@ using Subster.API.Services.Interfaces;
 
 namespace Subster.API.Jobs;
 
-public class SubscriptionBillingJob
-    {
-        private readonly ISubscriptionBillingService _billingService;
+public class SubscriptionBillingJob(ISubscriptionBillingService billingService)
+{
+    private readonly ISubscriptionBillingService _billingService = billingService;
 
-        public SubscriptionBillingJob(ISubscriptionBillingService billingService)
+    // This method is called by Hangfire to execute the job
+	public Task ExecuteAsync()
         {
-            _billingService = billingService;
-        }
-
-        /// <summary>
-        /// This is the method Hangfire will invoke on schedule.
-        /// </summary>
-        public Task ExecuteAsync()
-        {
-            // Pass in UtcNow so it picks up today's invoices
             return _billingService.ProcessDueInvoicesAsync(DateTime.UtcNow);
         }
     }

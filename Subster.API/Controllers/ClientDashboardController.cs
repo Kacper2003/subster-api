@@ -12,16 +12,11 @@ namespace Subster.API.Controllers;
 [Produces("application/json")]
 [Consumes("application/json")]
 [SwaggerTag("Viðmót viðskiptavinar")]
-public class ClientDashboardController : ControllerBase
+public class ClientDashboardController(IClientDashboardService clientDashboardService) : ControllerBase
 {
-    private readonly IClientDashboardService _clientDashboardService;
+    private readonly IClientDashboardService _clientDashboardService = clientDashboardService;
 
-    public ClientDashboardController(IClientDashboardService clientDashboardService)
-    {
-        _clientDashboardService = clientDashboardService;
-    }
-
-    [HttpGet("subscriptions")]
+	[HttpGet("subscriptions")]
     [Authorize(Roles = "Client")]
     [SwaggerOperation(
         Summary     = "Sækja áskriftir",
@@ -37,7 +32,7 @@ public class ClientDashboardController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var subscriptions = await _clientDashboardService.GetSubscriptionsByClientSsnAsync(clientSsn);
+		IEnumerable<SubscriptionDto> subscriptions = await _clientDashboardService.GetSubscriptionsByClientSsnAsync(clientSsn);
         return Ok(subscriptions);
     }
     
@@ -69,7 +64,7 @@ public class ClientDashboardController : ControllerBase
     [SwaggerResponse(200, "Listi af TrainerDto hlutum", typeof(IEnumerable<TrainerDto>))]
     public async Task<IActionResult> GetTrainers()
     {
-        var trainers = await _clientDashboardService.GetAllTrainersAsync();
+		IEnumerable<TrainerDto> trainers = await _clientDashboardService.GetAllTrainersAsync();
         return Ok(trainers);
     }
 }

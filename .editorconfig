@@ -1,0 +1,53 @@
+# .editorconfig - Style rules for Subster .NET project
+root = true
+
+[*.cs]
+
+########################################
+# Indentation and spacing
+########################################
+indent_style = tab
+indent_size = tab
+tab_width = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+########################################
+# Braces and new lines
+########################################
+csharp_new_line_before_open_brace = all
+
+########################################
+# Namespace declarations
+########################################
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+########################################
+# var preferences
+########################################
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
+
+########################################
+# Using directives
+########################################
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+########################################
+# Expression preferences
+########################################
+csharp_prefer_expression_bodied_methods = false
+csharp_prefer_expression_bodied_constructors = false
+csharp_prefer_expression_bodied_operators = false
+
+########################################
+# Modifier ordering
+########################################
+dotnet_sort_order = access, static, readonly
+
+########################################
+# File encoding
+########################################
+charset = utf-8

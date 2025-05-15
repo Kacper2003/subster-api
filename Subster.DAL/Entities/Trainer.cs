@@ -6,7 +6,6 @@ public class Trainer
     public string Name { get; set; } = null!;
     public string Ssn { get; set; } = null!;
     public string? PhoneNumber { get; set; }
-    public DateTime CreatedAt { get; set; }
     public string? PaydayClientId { get; set; }
     public string? PaydayClientSecret { get; set; }
 

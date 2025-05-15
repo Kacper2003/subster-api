@@ -1,6 +1,5 @@
 namespace Subster.API.Exceptions;
 
-public class ValidationException : Exception
+public class ValidationException(string message) : Exception(message)
 {
-    public ValidationException(string message) : base(message) { }
 }

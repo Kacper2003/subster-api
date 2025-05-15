@@ -11,14 +11,13 @@ namespace Subster.Tests.Services;
 [TestClass]
 public class TaktikalAuthServiceTests
 {
-    private Mock<ITaktikalApiClient> _mockClient = null!;  // fake HTTP client
-    private IConfiguration            _config     = null!;  // in-memory config
-    private TaktikalAuthService      _service    = null!;  // service under test
+    private Mock<ITaktikalApiClient> _mockClient = null!;
+    private IConfiguration            _config     = null!;
+    private TaktikalAuthService      _service    = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        // Prepare mocked API client
         _mockClient = new Mock<ITaktikalApiClient>();
 
         // Provide FlowKey via in-memory configuration
@@ -37,17 +36,17 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_NoPhoneOrSsn_Returns400()
     {
-        // Arrange: missing both identifiers
+        // Arrange
         var input = new AuthInputModel
         {
             PhoneNumber = null,
             Ssn         = null
         };
 
-        // Act
-        var result = await _service.AuthenticateAsync(input);
+		// Act
+		EndAuthResponseModel result = await _service.AuthenticateAsync(input);
 
-        // Assert: should reject with bad request
+        // Assert
         Assert.IsFalse(result.Authenticated);
         Assert.AreEqual(400, result.StatusCode);
         StringAssert.Contains(result.Error, "Either PhoneNumber or Ssn");
@@ -56,15 +55,15 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_MissingFlowKey_Returns500()
     {
-        // Arrange: no FlowKey in config
-        var emptyConfig = new ConfigurationBuilder().Build();
+		// Arrange
+		IConfigurationRoot emptyConfig = new ConfigurationBuilder().Build();
         var svc = new TaktikalAuthService(_mockClient.Object, emptyConfig);
         var input = new AuthInputModel { PhoneNumber = "555" };
 
-        // Act
-        var result = await svc.AuthenticateAsync(input);
+		// Act
+		EndAuthResponseModel result = await svc.AuthenticateAsync(input);
 
-        // Assert: should return server error
+        // Assert
         Assert.IsFalse(result.Authenticated);
         Assert.AreEqual(500, result.StatusCode);
         StringAssert.Contains(result.Error, "FlowKey is missing");
@@ -73,7 +72,7 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_StartAsyncReturnsNull_Returns502()
     {
-        // Arrange: StartAsync fails
+        // Arrange
         var input = new AuthInputModel
         {
             PhoneNumber = "555-1234",
@@ -83,15 +82,14 @@ public class TaktikalAuthServiceTests
             .Setup(c => c.StartAsync(It.IsAny<StartAuthInputModel>()))
             .Returns(Task.FromResult<StartAuthResponseModel?>(null));
 
-        // Act
-        var result = await _service.AuthenticateAsync(input);
+		// Act
+		EndAuthResponseModel result = await _service.AuthenticateAsync(input);
 
-        // Assert: should return bad gateway
+        // Assert
         Assert.IsFalse(result.Authenticated);
         Assert.AreEqual(502, result.StatusCode);
         StringAssert.Contains(result.Error, "Failed to call /auth/start");
 
-        // Verify StartAsync called with correct DTO
         _mockClient.Verify(c => c.StartAsync(
             It.Is<StartAuthInputModel>(dto =>
                 dto.FlowKey     == "dummy-flow-key" &&
@@ -104,7 +102,7 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_PollAsyncReturnsNull_Returns502()
     {
-        // Arrange: StartAsync succeeds, PollAsync fails
+        // Arrange
         var input = new AuthInputModel { PhoneNumber = "555-1234", Ssn = null };
         var fakeStart = new StartAuthResponseModel
         {
@@ -119,15 +117,14 @@ public class TaktikalAuthServiceTests
             .Setup(c => c.PollAsync(It.IsAny<PollAuthInputModel>()))
             .Returns(Task.FromResult<PollResponseModel?>(null));
 
-        // Act
-        var result = await _service.AuthenticateAsync(input);
+		// Act
+		EndAuthResponseModel result = await _service.AuthenticateAsync(input);
 
-        // Assert: should return bad gateway on poll failure
+        // Assert
         Assert.IsFalse(result.Authenticated);
         Assert.AreEqual(502, result.StatusCode);
         StringAssert.Contains(result.Error, "Failed to call /auth/poll");
 
-        // Verify both StartAsync and PollAsync were invoked
         _mockClient.Verify(c => c.StartAsync(It.IsAny<StartAuthInputModel>()), Times.Once);
         _mockClient.Verify(c => c.PollAsync(
             It.Is<PollAuthInputModel>(dto =>
@@ -141,7 +138,7 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_PollingSucceeds_Returns200WithCustomer()
     {
-        // Arrange: both StartAsync and PollAsync succeed
+        // Arrange
         var input = new AuthInputModel { PhoneNumber = "555-1234", Ssn = null };
         var fakeStart = new StartAuthResponseModel
         {
@@ -164,10 +161,10 @@ public class TaktikalAuthServiceTests
             .Setup(c => c.PollAsync(It.IsAny<PollAuthInputModel>()))
             .Returns(Task.FromResult<PollResponseModel?>(fakePoll));
 
-        // Act
-        var result = await _service.AuthenticateAsync(input);
+		// Act
+		EndAuthResponseModel result = await _service.AuthenticateAsync(input);
 
-        // Assert: should return success with correct customer
+        // Assert
         Assert.IsTrue(result.Authenticated);
         Assert.AreEqual(200, result.StatusCode);
         Assert.AreEqual(string.Empty, result.Error);
@@ -175,7 +172,6 @@ public class TaktikalAuthServiceTests
         Assert.AreEqual(expectedCustomer.Name, result.Customer!.Name);
         Assert.AreEqual(expectedCustomer.Ssn,  result.Customer.Ssn);
 
-        // Verify both client methods were called once
         _mockClient.Verify(c => c.StartAsync(It.IsAny<StartAuthInputModel>()), Times.Once);
         _mockClient.Verify(c => c.PollAsync(It.IsAny<PollAuthInputModel>()),   Times.Once);
     }
@@ -183,7 +179,7 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_SsnOnly_UsesAppContextType()
     {
-        // Arrange: SSN branch
+        // Arrange
         var input = new AuthInputModel { PhoneNumber = null, Ssn = "999-00-0000" };
         _mockClient
             .Setup(c => c.StartAsync(It.IsAny<StartAuthInputModel>()))
@@ -205,7 +201,7 @@ public class TaktikalAuthServiceTests
         // Act
         await _service.AuthenticateAsync(input);
 
-        // Assert: StartAsync should use "App" context
+        // Assert
         _mockClient.Verify(c => c.StartAsync(
             It.Is<StartAuthInputModel>(dto => dto.AuthenticationContextType == "App")
         ), Times.Once);
@@ -214,7 +210,7 @@ public class TaktikalAuthServiceTests
     [TestMethod]
     public async Task AuthenticateAsync_PhoneOnly_UsesSimContextType()
     {
-        // Arrange: Phone branch
+        // Arrange
         var input = new AuthInputModel { PhoneNumber = "444-5555", Ssn = null };
         _mockClient
             .Setup(c => c.StartAsync(It.IsAny<StartAuthInputModel>()))
@@ -236,7 +232,7 @@ public class TaktikalAuthServiceTests
         // Act
         await _service.AuthenticateAsync(input);
 
-        // Assert: StartAsync should use "Sim" context
+        // Assert
         _mockClient.Verify(c => c.StartAsync(
             It.Is<StartAuthInputModel>(dto => dto.AuthenticationContextType == "Sim")
         ), Times.Once);

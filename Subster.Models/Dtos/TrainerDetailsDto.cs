@@ -6,5 +6,5 @@ public class TrainerDetailsDto
     public string Name { get; set; } = "";
     public string Ssn { get; set; } = "";
     public string? PhoneNumber { get; set; }
-    public ICollection<ProgramDto> Programs { get; set; } = new List<ProgramDto>();
+    public ICollection<ProgramDto> Programs { get; set; } = [];
 }

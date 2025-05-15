@@ -8,34 +8,22 @@ using Subster.API.Exceptions;
 
 namespace Subster.API.Services.Implementations
 {
-    public class TrainerService : ITrainerService
+    public class TrainerService(ITrainerRepository trainerRepository) : ITrainerService
     {
-        private readonly ITrainerRepository _trainerRepository;
+        private readonly ITrainerRepository _trainerRepository = trainerRepository;
 
-        public TrainerService(ITrainerRepository trainerRepository)
-        {
-            _trainerRepository = trainerRepository;
-        }
-
-        /// <summary>
-        /// Retrieves a list of all trainers.
-        /// </summary>
-        public Task<IEnumerable<TrainerDto>> GetAllTrainersAsync()
+		public Task<IEnumerable<TrainerDto>> GetAllTrainersAsync()
             => _trainerRepository.GetAllTrainersAsync();
 
-        /// <summary>
-        /// Retrieves a trainer by their internal ID.
-        /// Returns null if not found.
-        /// </summary>
         public Task<TrainerDto?> GetTrainerByIdAsync(Guid trainerId)
             => _trainerRepository.GetTrainerByIdAsync(trainerId);
 
         public async Task<TrainerDetailsDto> GetTrainerDetailsBySsnAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+			TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
                 ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-            var trainerDetails = await _trainerRepository.GetTrainerDetailsByIdAsync(trainer.Id)
+			TrainerDetailsDto trainerDetails = await _trainerRepository.GetTrainerDetailsByIdAsync(trainer.Id)
                 ?? throw new NotFoundException("Trainer not found.");
 
             return trainerDetails;
@@ -43,25 +31,18 @@ namespace Subster.API.Services.Implementations
 
         public async Task<TrainerDetailsDto> UpdateTrainerDetailsAsync(string trainerSsn, TrainerUpdateModel updateModel)
         {
-            var trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
+			TrainerDto trainer = await _trainerRepository.GetTrainerBySsnAsync(trainerSsn)
                 ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
-            var updatedTrainer = await _trainerRepository.UpdateTrainerDetailsAsync(trainer.Id, updateModel)
+			TrainerDetailsDto updatedTrainer = await _trainerRepository.UpdateTrainerDetailsAsync(trainer.Id, updateModel)
                 ?? throw new NotFoundException("Trainer not found.");
 
             return updatedTrainer;
         }
 
-        /// <summary>
-        /// Checks whether a trainer with the given SSN already exists.
-        /// </summary>
         public Task<bool> ExistsBySsnAsync(string trainerSsn)
             => _trainerRepository.ExistsBySsnAsync(trainerSsn);
 
-        /// <summary>
-        /// Creates a trainer if none exists with the same SSN.
-        /// Returns true if created, false if one already existed.
-        /// </summary>
         public async Task<bool> CreateTrainerIfNotExistsAsync(UserInputModel inputModel)
         {
             if (!await _trainerRepository.ExistsBySsnAsync(inputModel.Ssn))
@@ -72,15 +53,13 @@ namespace Subster.API.Services.Implementations
             return false;
         }
 
-        /// <summary>
-        /// Retrieves the full Trainer entity (including decrypted Payday credentials).
-        /// </summary>
         public Task<Trainer?> GetTrainerEntityBySsnAsync(string trainerSsn)
             => _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
 
+        // Just has to check if the fields are not null, as they are already validated when uploaded
         public async Task<bool> HasPaydayCredentialsAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
+			Trainer trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn)
                 ?? throw new UnauthorizedException("Invalid trainer credentials.");
 
             return !string.IsNullOrEmpty(trainer.PaydayClientId) && !string.IsNullOrEmpty(trainer.PaydayClientSecret);
@@ -88,7 +67,7 @@ namespace Subster.API.Services.Implementations
 
         public async Task<bool> UpdatePaydayCredentialsAsync(string trainerSsn, string clientId, string clientSecret)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
+			Trainer? trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 
@@ -97,13 +76,9 @@ namespace Subster.API.Services.Implementations
             return true;
         }
 
-        /// <summary>
-        /// Deletes the trainer's Payday credentials.
-        /// Returns false if the trainer is not found.
-        /// </summary>
         public async Task<bool> DeletePaydayCredentialsAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
+			Trainer? trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 
@@ -112,13 +87,9 @@ namespace Subster.API.Services.Implementations
             return true;
         }
 
-        /// <summary>
-        /// Deletes (or soft-deletes) the trainer record.
-        /// Returns false if the trainer is not found.
-        /// </summary>
         public async Task<bool> DeleteTrainerAsync(string trainerSsn)
         {
-            var trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
+			Trainer? trainer = await _trainerRepository.FindTrainerEntityBySsnAsync(trainerSsn);
             if (trainer == null)
                 return false;
 

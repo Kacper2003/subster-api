@@ -13,26 +13,18 @@ namespace Subster.API.Controllers;
 [Produces("application/json")]
 [Consumes("application/json")]
 [SwaggerTag("Auðkenning")]
-public class AuthController : ControllerBase
+public class AuthController(
+	ITaktikalAuthService taktikalAuthService,
+	JwtService jwtService,
+	ITrainerService trainerService,
+	IClientService clientService) : ControllerBase
 {
-    private readonly ITaktikalAuthService _taktikalAuthService;
-    private readonly JwtService _jwtService;
-    private readonly ITrainerService _trainerService;
-    private readonly IClientService _clientService;
+    private readonly ITaktikalAuthService _taktikalAuthService = taktikalAuthService;
+    private readonly JwtService _jwtService = jwtService;
+    private readonly ITrainerService _trainerService = trainerService;
+    private readonly IClientService _clientService = clientService;
 
-    public AuthController(
-        ITaktikalAuthService taktikalAuthService,
-        JwtService jwtService,
-        ITrainerService trainerService,
-        IClientService clientService)
-    {
-        _taktikalAuthService = taktikalAuthService;
-        _jwtService = jwtService;
-        _trainerService = trainerService;
-        _clientService = clientService;
-    }
-
-    [HttpPost("login/trainer")]
+	[HttpPost("login/trainer")]
     [SwaggerOperation(
         Summary     = "Innskrá þjálfara",
         Description = "Auðkennir þjálfara með rafrænum skilríkjum og setur JWT-köku í vafra."
@@ -41,7 +33,7 @@ public class AuthController : ControllerBase
     [SwaggerResponse(401, "Innskráning mistókst (rangar upplýsingar)", typeof(AuthResult))]
     public async Task<IActionResult> LoginTrainer([FromBody] AuthInputModel inputModel)
     {
-        var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
+		Models.ResponseModels.EndAuthResponseModel authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
         if (!authResult.Authenticated)
         {
             return Unauthorized(authResult);
@@ -72,7 +64,7 @@ public class AuthController : ControllerBase
     [SwaggerResponse(401, "Innskráning mistókst (rangar upplýsingar)", typeof(AuthResult))]
     public async Task<IActionResult> LoginClient([FromBody] AuthInputModel inputModel)
     {
-        var authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
+		Models.ResponseModels.EndAuthResponseModel authResult = await _taktikalAuthService.AuthenticateAsync(inputModel);
         if (!authResult.Authenticated)
         {
             return Unauthorized(authResult);

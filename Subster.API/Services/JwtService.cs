@@ -7,33 +7,29 @@ using System.Text;
 
 namespace Subster.API.Services;
 
-public class JwtService
+public class JwtService(IConfiguration configuration)
 {
-    private readonly IConfiguration _configuration;
-    
-    public JwtService(IConfiguration configuration)
+    private readonly IConfiguration _configuration = configuration;
+
+	public string GenerateToken(string ssn, string name, string role)
     {
-        _configuration = configuration;
-    }
-    
-    public string GenerateToken(string ssn, string name, string role)
-    {
-        var jwtSettings = _configuration.GetSection("JwtSettings")
+		IConfigurationSection jwtSettings = _configuration.GetSection("JwtSettings")
             ?? throw new Exception("JWT settings not configured");
 
+        // Retrieve the secret key from configuration used for signing the token
         var secret = jwtSettings["SecretKey"] ?? throw new Exception("JWT secret key not found");
         var key = Encoding.UTF8.GetBytes(secret);
 
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        // Set up the claims you want inside the token
-        var claims = new[]
-        {
-            new Claim("Ssn", ssn),
+		// Set up the claims using the provided parameters
+		Claim[] claims =
+		[
+			new Claim("Ssn", ssn),
             new Claim("Name", name),
             new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        ];
 
         var expiresInMinuntes = jwtSettings.GetValue<int>("TokenExpirationMinutes");
 
@@ -49,7 +45,7 @@ public class JwtService
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
+		SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
 }

@@ -15,16 +15,11 @@ namespace Subster.API.Controllers;
 [Produces("application/json")]
 [Consumes("application/json")]
 [SwaggerTag("Æfingaáætlanir")]
-public class ProgramsController : ControllerBase
+public class ProgramsController(IProgramService programService) : ControllerBase
 {
-    private readonly IProgramService _programService;
+    private readonly IProgramService _programService = programService;
 
-    public ProgramsController(IProgramService programService)
-    {
-        _programService = programService;
-    }
-
-    [HttpGet]
+	[HttpGet]
     [SwaggerOperation(
         Summary     = "Sækja allar æfingaáætlanir",
         Description = "Skilar lista af öllum æfingaáætlunum sem tengjast innskráðum þjálfara."
@@ -38,7 +33,7 @@ public class ProgramsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var programs = await _programService.GetAllProgramsAsync(trainerSsn);
+		IEnumerable<ProgramDto> programs = await _programService.GetAllProgramsAsync(trainerSsn);
         return Ok(programs);
     }
 
@@ -56,7 +51,7 @@ public class ProgramsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var program = await _programService.GetProgramByIdAsync(trainerSsn, id);
+		ProgramDto program = await _programService.GetProgramByIdAsync(trainerSsn, id);
         return Ok(program);
     }
 
@@ -75,7 +70,7 @@ public class ProgramsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var program = await _programService.CreateProgramAsync(inputModel, trainerSsn);
+		ProgramDto program = await _programService.CreateProgramAsync(inputModel, trainerSsn);
         return CreatedAtAction(nameof(GetProgramById), new { id = program.Id }, program);
     }
 
@@ -94,7 +89,7 @@ public class ProgramsController : ControllerBase
             return Unauthorized("SSN not found in token");
         }
 
-        var updatedProgram = await _programService.UpdateProgramAsync(id, updateModel, trainerSsn);
+		ProgramDto updatedProgram = await _programService.UpdateProgramAsync(id, updateModel, trainerSsn);
         return Ok(updatedProgram);
     }
 

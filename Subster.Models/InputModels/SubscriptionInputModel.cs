@@ -4,6 +4,8 @@ namespace Subster.Models.InputModels;
 
 public class SubscriptionInputModel
 {
+    [Required]
+    public Guid ProgramId { get; set; }
     public string? ClientSsn { get; set; }
     public string? ClientPhoneNumber { get; set; }
     [Required]
@@ -11,6 +13,4 @@ public class SubscriptionInputModel
     [Required]
     [Range(1, 12)]
     public int DurationInMonths { get; set; }
-    [Required]
-    public Guid ProgramId { get; set; }
 }
