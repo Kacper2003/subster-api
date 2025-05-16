@@ -32,9 +32,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 Env.Load();
 builder.Configuration.AddEnvironmentVariables();
 
-Console.WriteLine(builder.Configuration.GetDebugView());
-
-
 // Bind to Render's PORT on all interfaces
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
