@@ -154,12 +154,14 @@ builder.Services.AddSingleton<EncryptionHelper>();
 builder.Services.AddMemoryCache();
 
 // Database context
-var database = Environment.GetEnvironmentVariable("POSTGRES_DB")     ?? throw new Exception("POSTGRES_DB is not set");
-var user     = Environment.GetEnvironmentVariable("POSTGRES_USER")   ?? throw new Exception("POSTGRES_USER is not set");
+var host = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? throw new Exception("POSTGRES_HOST is not set");
+var databasePort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? throw new Exception("POSTGRES_PORT is not set");
+var database = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? throw new Exception("POSTGRES_DB is not set");
+var user = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? throw new Exception("POSTGRES_USER is not set");
 var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? throw new Exception("POSTGRES_PASSWORD is not set");
 
 // assemble and register DbContext
-var connString = "Host=postgres-db;Port=5432;Database={database};Username={user};Password={password}";
+var connString = $"Host={host};Port={databasePort};Database={database};Username={user};Password={password}";
 
 builder.Services.AddDbContext<SubsterDbContext>(options =>
     options.UseNpgsql(
