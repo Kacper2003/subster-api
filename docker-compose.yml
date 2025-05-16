@@ -1,13 +1,13 @@
-version: "3.8"
-
 services:
   postgres-db:
     image: postgres:latest
     container_name: postgres-db
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: substerdb
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -15,7 +15,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d substerdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 2s
       timeout: 5s
       retries: 5
@@ -30,8 +30,9 @@ services:
     environment:
       # Kestrel listens on 0.0.0.0:${PORT}
       - ASPNETCORE_URLS=http://0.0.0.0:${PORT}
+      - ConnectionStrings__SubsterDb=Host=postgres-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     ports:
-      # Expose container port ${PORT} on host port ${PORT}
+      # Map the host port to the container port
       - "${PORT}:${PORT}"
     depends_on:
       postgres-db:
