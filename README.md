@@ -38,7 +38,7 @@ This design minimizes security risks and reduces unnecessary external API reques
 
 ---
 
-## Deployment
+### Deployment
 - **Local Development**: Run using Docker Compose with `.env` file for configuration  
 - **Production**: Hosted on Render with automated deployments from GitHub  
 
@@ -48,15 +48,15 @@ Swagger is available for API testing:
 
 ---
 
-## Setup
+### Setup
 
-### Prerequisites
+#### Prerequisites
 - Docker & Docker Compose  
 - .NET SDK 9.0  
 - PostgreSQL (via Docker container)  
 - Node.js (if working with frontend too)  
 
-### Steps
+#### Steps
 ```
 # Clone the repository
 git clone git@github.com:Kacper2003/subster-api.git
