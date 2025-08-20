@@ -1,6 +1,6 @@
-# Subster Backend
+## Subster Backend
 
-## Overview
+### Overview
 Subster is a subscription management platform designed for personal trainers and their clients.  
 The backend provides secure authentication, subscription handling, and integration with external services for invoicing and electronic identification.  
 
@@ -8,7 +8,7 @@ Built with modern best practices, Subster ensures **security, scalability, and m
 
 ---
 
-## Architecture
+### Architecture
 The backend is built on **.NET 9.0** with **Entity Framework Core** for database access and runs inside a **Docker** environment with a **PostgreSQL** database.  
 
 The system follows a layered architecture to maintain **Separation of Concerns**:
@@ -21,7 +21,7 @@ This structure keeps responsibilities well-isolated and simplifies testing and f
 
 ---
 
-## Security
+### Security
 Security was a core design principle from the beginning:
 - All sensitive data (API keys, secrets) is **encrypted with AES-256**  
 - Encrypted data is only decrypted in memory during use  
