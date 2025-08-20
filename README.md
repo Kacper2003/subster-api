@@ -73,7 +73,7 @@ The backend will run on `http://localhost:10000`.
 
 ---
 
-## API Documentation
+### API Documentation
 The backend follows the **OpenAPI standard** for documenting endpoints.
 
 - **Swagger UI** provides an interactive view of all REST endpoints, parameters, and responses  
@@ -85,7 +85,7 @@ For local development, Swagger can still be accessed after running the backend a
 
 ---
 
-## Example Endpoint Categories
+### Example Endpoint Categories
 
 - **Auth**  
   - `POST /api/auth/login/trainer` – Trainer login with eID  
@@ -99,14 +99,6 @@ For local development, Swagger can still be accessed after running the backend a
 - **Trainer Dashboard**  
   - `GET /api/trainer/clients` – Get all trainer’s clients  
   - `POST /api/trainer/clients` – Register new client  
-
----
-
-## Frontend
-The frontend is a separate repository built with **Next.js** and Material UI.  
-It consumes this backend through REST APIs.  
-
-Repo: [Subster Web](https://github.com/einsiful/subster-web)  
 
 ---
 
